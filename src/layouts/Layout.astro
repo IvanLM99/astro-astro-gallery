@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+const { title = "Cosmos | Iván López", description = "Astrophotography gallery", image = "/assets/EclipseUs.jpg" } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -7,10 +8,16 @@ import '../styles/global.css';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmos | Iván López</title>
-    <meta name="description" content="Astrophotography gallery and professional portfolio by Iván López.">
+    <title>{title}</title>
+    <meta name="description" content={description}>
     <meta name="author" content="Iván López">
     <link rel="icon" type="image/png" href="/assets/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content={title}>
+    <meta property="og:description" content={description}>
+    <meta property="og:image" content={image}>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
