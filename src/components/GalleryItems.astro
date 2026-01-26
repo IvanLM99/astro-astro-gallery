@@ -1,0 +1,19 @@
+---
+import { Image } from 'astro:assets';
+
+const { item, imagePromise } = Astro.props;
+---
+
+<div class="g-item" class:list={[item.category]} data-json={JSON.stringify(item)}>
+    {imagePromise && (
+        <Image 
+            src={imagePromise} 
+            alt={item.object_en}
+            width={600} 
+            quality={80}
+            format="webp"
+            class="grid-img"
+        />
+    )}
+    <div class="overlay"><span data-t="details">DETAILS</span></div>
+</div>
