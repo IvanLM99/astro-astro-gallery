@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 const { title = "Cosmos | Iván López", description = "Astrophotography gallery", image = "/assets/EclipseUs.jpg" } = Astro.props;
+
 ---
 
 <!DOCTYPE html>
@@ -12,6 +14,7 @@ const { title = "Cosmos | Iván López", description = "Astrophotography gallery
     <meta name="description" content={description}>
     <meta name="author" content="Iván López">
     <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <ClientRouter />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
