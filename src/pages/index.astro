@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { Image } from 'astro:assets'; // <--- NEW: Import the Image component
 import galleryDataRaw from '../data/gallery_data.json';
+import GalleryItem from '../components/GalleryItem.astro';
 
 // 1. Load all images from src/assets
 // This creates a list of every image file in your folder
@@ -99,34 +100,9 @@ const categories = [...new Set(sortedData.map(item => item.category).filter(c =>
                     <div class="year-section" id={`year-${year}`}>
                         <h2 class="year-title">{year}</h2>
                         <div class="gallery-grid">
-                            {grouped[year].map(item => {
-                                const imagePromise = getImagePath(item.src);
-                                
-                                return (
-                                    <div class="g-item" class:list={[item.category]} data-json={JSON.stringify(item)}>
-                                        {/* 
-                                           Astro waits for the image to process. 
-                                           width={600} means: "Even if the photo is 4k, generate a 600px version for the grid thumbnail"
-                                           quality={80} compresses it slightly for speed.
-                                        */}
-                                        {imagePromise ? (
-                                            <Image 
-                                                src={imagePromise} 
-                                                alt={item.object_en}
-                                                width={600} 
-                                                quality={80}
-                                                format="webp"
-                                                class="grid-img"
-                                            />
-                                        ) : (
-                                            /* Fallback if image path is broken */
-                                            <p style="color:red">Image Not Found</p>
-                                        )}
-                                        
-                                        <div class="overlay"><span data-t="details">DETAILS</span></div>
-                                    </div>
-                                );
-                            })}
+                            {grouped[year].map(item => (
+                                <GalleryItem item={item} imagePromise={getImagePath(item.src)} />
+                            ))}
                         </div>
                     </div>
                 ))}
