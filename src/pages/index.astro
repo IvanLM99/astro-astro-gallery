@@ -1,22 +1,38 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets'; // <--- NEW: Import the Image component
 import galleryDataRaw from '../data/gallery_data.json';
 
-// --- SERVER SIDE LOGIC (Runs once during build) ---
-// 1. Sort data by date (Newest first)
+// 1. Load all images from src/assets
+// This creates a list of every image file in your folder
+const imageFiles = import.meta.glob<{ default: ImageMetadata }>('/src/assets/**/*.{jpeg,jpg,png,tiff,webp}');
+
+// 2. Sort Data (Same as before)
 const sortedData = galleryDataRaw.sort((a, b) => {
     const d1 = new Date(a.year, a.month - 1, a.day);
     const d2 = new Date(b.year, b.month - 1, b.day);
     return d2.getTime() - d1.getTime(); 
 });
 
-// 2. Group by Year
+// 3. Helper to find the image file based on JSON path
+function getImagePath(srcPath) {
+    // We assume your JSON says "assets/2025/..."
+    // We need to match it to "/src/assets/2025/..."
+    const fullPath = `/src/${srcPath}`;
+    
+    if (!imageFiles[fullPath]) {
+        console.error(`Image not found: ${fullPath}`);
+        return null; // Handle missing images gracefully
+    }
+    return imageFiles[fullPath]();
+}
+
+// 4. Group by Year (Same as before)
 const grouped = sortedData.reduce((acc, item) => {
     (acc[item.year] = acc[item.year] || []).push(item);
     return acc;
 }, {});
 
-// 3. Get unique categories
 const years = Object.keys(grouped).sort((a, b) => b - a);
 const categories = [...new Set(sortedData.map(item => item.category).filter(c => c))].sort();
 ---
@@ -83,16 +99,34 @@ const categories = [...new Set(sortedData.map(item => item.category).filter(c =>
                     <div class="year-section" id={`year-${year}`}>
                         <h2 class="year-title">{year}</h2>
                         <div class="gallery-grid">
-                            {grouped[year].map(item => (
-                                <div class="g-item" class:list={[item.category]} 
-                                     data-json={JSON.stringify(item)}>
-                                    <img src={item.src.replace(/\.(jpeg|jpg|png|webp)$/i, '_thumb.webp')} 
-                                         alt={item.object_en} 
-                                         loading="lazy"
-                                         onerror={`this.onerror=null; this.src='${item.src}';`} />
-                                    <div class="overlay"><span data-t="details">DETAILS</span></div>
-                                </div>
-                            ))}
+                            {grouped[year].map(item => {
+                                const imagePromise = getImagePath(item.src);
+                                
+                                return (
+                                    <div class="g-item" class:list={[item.category]} data-json={JSON.stringify(item)}>
+                                        {/* 
+                                           Astro waits for the image to process. 
+                                           width={600} means: "Even if the photo is 4k, generate a 600px version for the grid thumbnail"
+                                           quality={80} compresses it slightly for speed.
+                                        */}
+                                        {imagePromise ? (
+                                            <Image 
+                                                src={imagePromise} 
+                                                alt={item.object_en}
+                                                width={600} 
+                                                quality={80}
+                                                format="webp"
+                                                class="grid-img"
+                                            />
+                                        ) : (
+                                            /* Fallback if image path is broken */
+                                            <p style="color:red">Image Not Found</p>
+                                        )}
+                                        
+                                        <div class="overlay"><span data-t="details">DETAILS</span></div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
