@@ -1,7 +1,7 @@
 <div id="lightbox">
-    <span class="close-lb" id="lb-close">&times;</span>
-    <button class="lb-nav-btn prev-btn" id="lb-prev"><i class="fas fa-chevron-left"></i></button>
-    <button class="lb-nav-btn next-btn" id="lb-next"><i class="fas fa-chevron-right"></i></button>
+    <span class="close-lb" id="lb-close" aria-label="Close Lightbox">&times;</span>
+    <button class="lb-nav-btn prev-btn" id="lb-prev" aria-label="Previous Image"><i class="fas fa-chevron-left"></i></button>
+    <button class="lb-nav-btn next-btn" id="lb-next" aria-label="Next Image"><i class="fas fa-chevron-right"></i></button>
 
     <div class="lb-content">
         <div class="lb-image-wrapper">
@@ -45,40 +45,69 @@
 
     let currentLang = 'es';
     let currentIndex = 0;
-    // window.galleryData is injected by Gallery.astro
-
+    
     const lightbox = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lb-img') as HTMLImageElement;
+    const lbImg = document.getElementById('lb-img');
     const lbTitle = document.getElementById('lb-title');
     const lbStoryContainer = document.getElementById('lb-story-container');
     const lbStoryText = document.getElementById('lb-story-text');
-    const lbContainer = document.querySelector('.lb-image-container') as HTMLElement;
-    const lbWrapper = document.querySelector('.lb-image-wrapper') as HTMLElement;
+    const lbContainer = document.querySelector('.lb-image-container');
+    const lbWrapper = document.querySelector('.lb-image-wrapper');
 
-    // Listen for global events
-    window.addEventListener('langChange', (e: any) => {
+    // Global Events
+    window.addEventListener('langChange', (e) => {
         currentLang = e.detail.lang;
         if(lightbox.classList.contains('active')) updateContent();
     });
 
-    window.addEventListener('openLightbox', (e: any) => {
+    window.addEventListener('openLightbox', (e) => {
         const id = e.detail.id;
+        const thumbSrc = e.detail.thumbSrc;
         const data = window.galleryData || [];
+        
         currentIndex = data.findIndex(i => i.id === id);
+        
         if(currentIndex !== -1) {
-            updateContent();
             lightbox.classList.add('active');
             document.body.classList.add('no-scroll');
+            
+            // Set thumbnail immediately
+            if(thumbSrc) {
+                lbImg.src = thumbSrc;
+                lbImg.classList.add('blur-loading');
+            }
+            
+            updateContent(true); 
             resetZoom();
         }
     });
 
-    function updateContent() {
+    function updateContent(isInitialLoad = false) {
         const data = window.galleryData[currentIndex];
         if(!data) return;
 
-        lbImg.src = data.src; // Uses the full Astro generated path
-        
+        // Image Swapping
+        if(!isInitialLoad) {
+            if(data.thumbnailSrc) {
+                lbImg.src = data.thumbnailSrc; 
+                lbImg.classList.add('blur-loading');
+            } else {
+                lbImg.style.opacity = '0'; 
+            }
+        }
+
+        // High Res Loader
+        const highResLoader = new Image();
+        highResLoader.src = data.src;
+        highResLoader.onload = () => {
+            if(window.galleryData[currentIndex].id === data.id) {
+                lbImg.src = data.src;
+                lbImg.classList.remove('blur-loading');
+                lbImg.style.opacity = '1';
+            }
+        };
+
+        // Text Logic
         const title = currentLang === 'en' ? data.title_en : data.title_es;
         const story = currentLang === 'en' ? data.story_en : data.story_es;
         const objName = currentLang === 'en' ? (data.object_en || data.object_es) : data.object_es;
@@ -92,18 +121,29 @@
             lbStoryContainer.style.display = 'none';
         }
 
-        // Specs
-        document.getElementById('val-obj').innerText = objName;
-        document.getElementById('val-date').innerText = data.date;
-        document.getElementById('val-exp').innerText = data.exposure;
-        document.getElementById('val-equip').innerText = data.equipment;
+        // Update Specs
+        updateSpec('spec-obj', 'val-obj', objName);
+        updateSpec('spec-date', 'val-date', data.date);
+        updateSpec('spec-exp', 'val-exp', data.exposure);
+        updateSpec('spec-equip', 'val-equip', data.equipment);
         
-        // Translate labels inside lightbox
+        // Translate Labels
         const specs = ['lb_obj', 'lb_date', 'lb_exp', 'lb_equip'];
         specs.forEach(key => {
             const el = document.querySelector(`[data-t="${key}"]`);
             if(el) el.textContent = translations[currentLang][key];
         });
+    }
+
+    function updateSpec(idContainer, idVal, value) {
+        const container = document.getElementById(idContainer);
+        const valEl = document.getElementById(idVal);
+        if(!value || value.trim() === "") {
+            container.style.display = 'none';
+        } else {
+            container.style.display = 'block';
+            valEl.innerText = value;
+        }
     }
 
     function changeImage(dir) {
@@ -122,9 +162,32 @@
     function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
+        setTimeout(() => { lbImg.src = ''; }, 300);
     }
 
-    // Zoom Logic
+    // === MOBILE SWIPE GESTURES ===
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    lightbox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    lightbox.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+            changeImage(1); // Swipe Left -> Next
+        }
+        if (touchEndX > touchStartX + 50) {
+            changeImage(-1); // Swipe Right -> Prev
+        }
+    }
+
+    // === ZOOM LOGIC ===
     let scale = 1, pointX = 0, pointY = 0, panning = false, startX = 0, startY = 0;
 
     function resetZoom() {
@@ -172,7 +235,6 @@
         lbWrapper.addEventListener('mouseleave', () => { panning = false; lbWrapper.style.cursor = "grab"; });
     }
 
-    // Key events
     document.addEventListener('keydown', (e) => {
         if (!lightbox.classList.contains('active')) return;
         if (e.key === "Escape") closeLightbox();
