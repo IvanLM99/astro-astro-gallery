@@ -1,5 +1,5 @@
 ---
-import { Image, getImage } from 'astro:assets'; // <--- Vital import
+import { Image, getImage } from 'astro:assets';
 import galleryDataRaw from '../data/gallery_data.json';
 
 // 1. Sort Data
@@ -9,33 +9,25 @@ const galleryData = galleryDataRaw.sort((a, b) => {
     return d2.getTime() - d1.getTime();
 });
 
-// 2. Glob all images from src/assets
-// We use a broad pattern to catch all extensions
+// 2. Glob all images
 const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/**/*.{jpeg,jpg,png,tiff,webp,JPEG,JPG,PNG}');
 
-// --- FIX FOR CASE SENSITIVITY (LINUX/CI) ---
-// Create a normalized map where keys are lowercase for easier matching
+// Fix for case sensitivity
 const normalizedImages = {};
 Object.keys(images).forEach(key => {
     normalizedImages[key.toLowerCase()] = images[key];
 });
 
-// 3. Resolve images for the grid
+// 3. Resolve images
 const resolvedData = await Promise.all(galleryData.map(async (item) => {
-    // Construct path from JSON
     const originalPath = `/src/${item.src}`;
-    
-    // Try exact match first
     let imageImport = images[originalPath];
-
-    // If exact match fails, try lowercase match (fixes .JPG vs .jpg issues)
     if (!imageImport) {
         imageImport = normalizedImages[originalPath.toLowerCase()];
     }
     
     if (!imageImport) {
-        // Log error but don't break build immediately, just skip this item
-        console.error(`❌ Image missing: ${originalPath} (Checked case-insensitive)`);
+        console.error(`❌ Image missing: ${originalPath}`);
         return null;
     }
 
@@ -46,10 +38,8 @@ const resolvedData = await Promise.all(galleryData.map(async (item) => {
     };
 }));
 
-// Filter out missing images so the build doesn't crash on nulls
 const validItems = resolvedData.filter(i => i !== null);
 
-// Group by Year
 const grouped = validItems.reduce((acc, item) => {
     if (!acc[item.year]) acc[item.year] = [];
     acc[item.year].push(item);
@@ -60,15 +50,12 @@ const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
 // 4. Create Client-Side Map
-// We use await Promise.all because getImage is async
 const lightboxMap = await Promise.all(validItems.map(async (item) => {
     let thumbnailSrc = '';
-    
     try {
-        // Generate a small WebP for the blur effect
         const thumb = await getImage({
             src: item.imageMetadata,
-            width: 20, // Very small for blur
+            width: 20,
             format: 'webp',
             quality: 20
         });
@@ -79,8 +66,8 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
     return {
         ...item, 
-        src: item.imageMetadata.src, // Optimized Full Res Path
-        thumbnailSrc: thumbnailSrc   // Tiny Blur Path
+        src: item.imageMetadata.src,
+        thumbnailSrc: thumbnailSrc
     };
 }));
 ---
@@ -126,7 +113,6 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     ))}
 </div>
 
-<!-- Inject Data for Client Script -->
 <script define:vars={{ lightboxMap }}>
     window.galleryData = lightboxMap;
 </script>
@@ -170,10 +156,19 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author: "- Michio Kaku" }
     ];
 
-        let quoteIndex = 0;
+    let quoteIndex = 0;
     const quoteTextEl = document.getElementById('quote-text');
     const quoteAuthEl = document.getElementById('quote-author');
     let currentLang = 'es';
+
+    // Shuffle function (Fisher-Yates) to prevent repetition
+    function shuffleQuotes() {
+        for (let i = quotes.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [quotes[i], quotes[j]] = [quotes[j], quotes[i]];
+        }
+    }
+    shuffleQuotes();
 
     function updateQuoteDisplay() {
         if(!quoteTextEl || !quoteAuthEl) return;
@@ -183,22 +178,15 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         quoteAuthEl.textContent = q.author;
     }
 
-    // Cycle with Fade
     function cycleQuotes() {
         if(!quoteTextEl || !quoteAuthEl) return;
         
-        // 1. Fade Out
         quoteTextEl.classList.remove('visible');
         quoteAuthEl.classList.remove('visible');
 
-        // 2. Wait, Change, Fade In
         setTimeout(() => {
-            // Pick Random index different from current
-            let newIndex = Math.floor(Math.random() * quotes.length);
-            while(newIndex === quoteIndex && quotes.length > 1) {
-                newIndex = Math.floor(Math.random() * quotes.length);
-            }
-            quoteIndex = newIndex;
+            quoteIndex = (quoteIndex + 1) % quotes.length;
+            if(quoteIndex === 0) shuffleQuotes();
             
             updateQuoteDisplay();
             
@@ -207,7 +195,6 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         }, 1000); 
     }
 
-    // Start Loop
     setTimeout(() => {
         if(quoteTextEl) quoteTextEl.classList.add('visible');
         if(quoteAuthEl) quoteAuthEl.classList.add('visible');
@@ -215,7 +202,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     }, 500);
 
     // Lang Change Listener
-    window.addEventListener('langChange', (e: any) => {
+    window.addEventListener('langChange', (e) => {
         currentLang = e.detail.lang;
         updateQuoteDisplay();
     });
@@ -226,16 +213,16 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
+            const target = e.target;
             const category = target.getAttribute('data-filter');
             
             filterBtns.forEach(b => b.classList.remove('active'));
             target.classList.add('active');
 
-            yearSections.forEach((section: HTMLElement) => {
+            yearSections.forEach((section) => {
                 let visibleCount = 0;
                 const items = section.querySelectorAll('.g-item');
-                items.forEach((item: HTMLElement) => {
+                items.forEach((item) => {
                     if(category === 'all' || item.classList.contains(category)) {
                         item.style.display = 'block';
                         visibleCount++;
@@ -253,8 +240,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     items.forEach(item => {
         item.addEventListener('click', (e) => {
             const id = item.getAttribute('data-id');
-            // Get the current thumbnail src from the DOM image
-            const thumbImg = item.querySelector('img') as HTMLImageElement;
+            const thumbImg = item.querySelector('img');
             const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
 
             window.dispatchEvent(new CustomEvent('openLightbox', { 
