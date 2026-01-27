@@ -8,18 +8,51 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const siteUrl = "https://ivanlm99.github.io/"; // Update this to your actual URL
 ---
 
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="Astrophotography gallery and professional portfolio by Iván López." />
-        <meta name="keywords" content="Astrophotography, Data Scientist, Deep Sky, Portfolio, Iván López, Astronomy, Spain">
-        <meta name="author" content="Iván López">
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
 		<meta name="generator" content={Astro.generator} />
+
+        <!-- === SEO & META === -->
+		<meta name="description" content="Astrophotography gallery and professional portfolio by Iván López. Exploring the cosmos through photography and data." />
+        <meta name="keywords" content="Astrophotography, Data Scientist, Deep Sky, Portfolio, Iván López, Astronomy, Spain, Mallorca">
+        <meta name="author" content="Iván López">
+
+        <!-- Open Graph / Facebook / LinkedIn -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content={siteUrl}>
+        <meta property="og:title" content={title}>
+        <meta property="og:description" content="Capturing the invisible. Astrophotography gallery & Professional Portfolio.">
+        <!-- Ensure you have an image at public/assets/EclipseUs.jpg or similar -->
+        <meta property="og:image" content="/assets/EclipseUs.jpg"> 
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:title" content={title}>
+        <meta property="twitter:description" content="Capturing the invisible. Astrophotography gallery & Professional Portfolio.">
+        <meta property="twitter:image" content="/assets/EclipseUs.jpg">
+
+        <!-- === STRUCTURED DATA (JSON-LD) === -->
+        <script type="application/ld+json" is:inline>
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": "Iván López",
+          "url": "https://ivanlm99.github.io/",
+          "sameAs": [
+            "https://linkedin.com/in/lmivan",
+            "https://github.com/IvanLM99"
+          ],
+          "jobTitle": "AI Engineer & Astrophotographer",
+          "knowsAbout": ["Astrophotography", "Artificial Intelligence", "Data Science"]
+        }
+        </script>
         
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
