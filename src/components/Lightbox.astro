@@ -71,13 +71,12 @@
             lightbox.classList.add('active');
             document.body.classList.add('no-scroll');
             
-            // 1. Show Thumbnail Immediately (Blur)
+            // Set thumbnail immediately (instant feedback)
             if(thumbSrc) {
                 lbImg.src = thumbSrc;
                 lbImg.classList.add('blur-loading');
             }
             
-            // 2. Load High Res
             updateContent(true); 
             resetZoom();
         }
@@ -87,24 +86,27 @@
         const data = window.galleryData[currentIndex];
         if(!data) return;
 
-        // --- IMAGE LOADING LOGIC ---
-        // If it's a navigation click (not initial open), we might not have thumbSrc handy easily
-        // unless we passed it. So for nav, we keep current or show nothing until load.
-        // But for initial load, we already set the thumb in openLightbox event.
-        
+        // --- IMAGE SWAPPING LOGIC ---
+        // If it's navigation (arrows), we didn't get a thumbSrc passed in the event.
+        // We must use the thumbnail stored in the data map to avoid showing the old image.
         if(!isInitialLoad) {
-             // For navigation, add blur while loading new image
-             lbImg.classList.add('blur-loading');
+            if(data.thumbnailSrc) {
+                lbImg.src = data.thumbnailSrc; // Swap to new thumbnail
+                lbImg.classList.add('blur-loading');
+            } else {
+                lbImg.style.opacity = '0'; // Fallback if no thumb
+            }
         }
 
-        // Create a temporary loader
+        // Load High Res in background
         const highResLoader = new Image();
         highResLoader.src = data.src;
         highResLoader.onload = () => {
-            // Only swap if we are still looking at this image
+            // Check if user is still on this image
             if(window.galleryData[currentIndex].id === data.id) {
                 lbImg.src = data.src;
                 lbImg.classList.remove('blur-loading');
+                lbImg.style.opacity = '1';
             }
         };
 
@@ -163,8 +165,8 @@
     function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
-        // Reset src to avoid flash of old image next time
-        setTimeout(() => { lbImg.src = ''; }, 500);
+        // Clear src slightly later to avoid flickering but ensure reset
+        setTimeout(() => { lbImg.src = ''; }, 300);
     }
 
     // Zoom Logic
