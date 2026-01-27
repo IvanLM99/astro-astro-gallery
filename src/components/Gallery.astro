@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets'; // <--- Vital import
 import galleryDataRaw from '../data/gallery_data.json';
 
 // 1. Sort Data
@@ -10,17 +10,32 @@ const galleryData = galleryDataRaw.sort((a, b) => {
 });
 
 // 2. Glob all images from src/assets
-// This grabs the actual file references so Astro can process them
-const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/**/*.{jpeg,jpg,png,tiff,webp}');
+// We use a broad pattern to catch all extensions
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/**/*.{jpeg,jpg,png,tiff,webp,JPEG,JPG,PNG}');
+
+// --- FIX FOR CASE SENSITIVITY (LINUX/CI) ---
+// Create a normalized map where keys are lowercase for easier matching
+const normalizedImages = {};
+Object.keys(images).forEach(key => {
+    normalizedImages[key.toLowerCase()] = images[key];
+});
 
 // 3. Resolve images for the grid
 const resolvedData = await Promise.all(galleryData.map(async (item) => {
-    // The JSON src is "assets/year/file.jpg", but glob keys are "/src/assets/year/file.jpg"
-    const globPath = `/src/${item.src}`;
-    const imageImport = images[globPath];
+    // Construct path from JSON
+    const originalPath = `/src/${item.src}`;
+    
+    // Try exact match first
+    let imageImport = images[originalPath];
+
+    // If exact match fails, try lowercase match (fixes .JPG vs .jpg issues)
+    if (!imageImport) {
+        imageImport = normalizedImages[originalPath.toLowerCase()];
+    }
     
     if (!imageImport) {
-        console.error(`Image not found: ${globPath}`);
+        // Log error but don't break build immediately, just skip this item
+        console.error(`❌ Image missing: ${originalPath} (Checked case-insensitive)`);
         return null;
     }
 
@@ -31,6 +46,7 @@ const resolvedData = await Promise.all(galleryData.map(async (item) => {
     };
 }));
 
+// Filter out missing images so the build doesn't crash on nulls
 const validItems = resolvedData.filter(i => i !== null);
 
 // Group by Year
@@ -44,19 +60,27 @@ const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
 // 4. Create Client-Side Map
-// We generate a specific thumbnail URL for the JS to use during navigation
+// We use await Promise.all because getImage is async
 const lightboxMap = await Promise.all(validItems.map(async (item) => {
-    const thumb = await getImage({
-        src: item.imageMetadata,
-        width: 600,
-        format: 'webp',
-        quality: 50 // Lower quality for instant blur loading
-    });
+    let thumbnailSrc = '';
+    
+    try {
+        // Generate a small WebP for the blur effect
+        const thumb = await getImage({
+            src: item.imageMetadata,
+            width: 20, // Very small for blur
+            format: 'webp',
+            quality: 20
+        });
+        thumbnailSrc = thumb.src;
+    } catch (e) {
+        console.error("Failed to generate thumbnail for", item.src);
+    }
 
     return {
-        ...item, // 1. Spread raw JSON first
-        src: item.imageMetadata.src, // 2. Overwrite 'src' with optimized full-res path (Fixes 404)
-        thumbnailSrc: thumb.src // 3. Add generated thumbnail path for navigation
+        ...item, 
+        src: item.imageMetadata.src, // Optimized Full Res Path
+        thumbnailSrc: thumbnailSrc   // Tiny Blur Path
     };
 }));
 ---
@@ -86,10 +110,6 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             <div class="gallery-grid">
                 {grouped[year].map((item, index) => (
                     <div class={`g-item ${item.category}`} data-id={item.id}>
-                        <!-- 
-                           This creates the optimized Thumbnail (WebP).
-                           The lightbox will load the full 'src' defined in lightboxMap above.
-                        -->
                         <Image 
                             src={item.imageMetadata} 
                             alt={item.title_en}
