@@ -1,1 +1,111 @@
+<nav id="navbar">
+    <div class="nav-left">
+        <span class="site-title">I. LOPEZ</span>
+    </div>
+    
+    <div class="nav-center">
+        <button class="menu-btn active" id="btn-gallery">GALERÍA</button>
+        <button class="menu-btn" id="btn-universe">MI UNIVERSO</button>
+    </div>
 
+    <div class="nav-right">
+        <div class="lang-select">
+            <span id="lang-en" class="lang">EN</span> / 
+            <span id="lang-es" class="lang active">ES</span>
+        </div>
+    </div>
+</nav>
+
+<script>
+    import { translations } from '../data/translations.js';
+
+    // Navbar Scroll Logic
+    const navbar = document.getElementById('navbar');
+    let lastScrollY = window.scrollY;
+
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        if(navbar) {
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                navbar.classList.add('nav-hidden');
+            } else {
+                navbar.classList.remove('nav-hidden');
+            }
+            if (currentScrollY > 50) {
+                navbar.classList.add('nav-faded');
+            } else {
+                navbar.classList.remove('nav-faded');
+            }
+            
+            // Scroll top button visibility logic
+            const stBtn = document.getElementById('scroll-top-btn');
+            if(stBtn) {
+                 if(currentScrollY > 500) stBtn.classList.add('visible');
+                 else stBtn.classList.remove('visible');
+            }
+        }
+        lastScrollY = currentScrollY;
+    }, {passive: true});
+
+    // Tab Switching Logic
+    const btnGallery = document.getElementById('btn-gallery');
+    const btnUniverse = document.getElementById('btn-universe');
+    const galleryTab = document.getElementById('gallery-tab');
+    const portfolioTab = document.getElementById('portfolio-tab');
+
+    function switchTab(tab) {
+        if(!galleryTab || !portfolioTab || !btnGallery || !btnUniverse) return;
+        
+        if(tab === 'gallery') {
+            galleryTab.classList.remove('hidden');
+            galleryTab.classList.add('fade-in');
+            portfolioTab.classList.add('hidden');
+            btnGallery.classList.add('active');
+            btnUniverse.classList.remove('active');
+        } else {
+            portfolioTab.classList.remove('hidden');
+            portfolioTab.classList.add('fade-in');
+            galleryTab.classList.add('hidden');
+            btnUniverse.classList.add('active');
+            btnGallery.classList.remove('active');
+        }
+    }
+
+    btnGallery?.addEventListener('click', () => switchTab('gallery'));
+    btnUniverse?.addEventListener('click', () => switchTab('portfolio'));
+
+    // Language Logic
+    const langEn = document.getElementById('lang-en');
+    const langEs = document.getElementById('lang-es');
+    let currentLang = 'es';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        const elements = document.querySelectorAll('[data-t]');
+        elements.forEach((el) => {
+            const key = el.getAttribute('data-t');
+            if (translations[lang] && translations[lang][key]) {
+                el.textContent = translations[lang][key];
+            } else if (key?.startsWith('cat_')) {
+                // Fallback for categories
+                const catName = key.replace('cat_', '');
+                el.textContent = catName.charAt(0).toUpperCase() + catName.slice(1);
+            }
+        });
+
+        if(btnGallery) btnGallery.textContent = translations[lang].nav_gallery;
+        if(btnUniverse) btnUniverse.textContent = translations[lang].nav_portfolio;
+
+        langEn?.classList.toggle('active', lang === 'en');
+        langEs?.classList.toggle('active', lang === 'es');
+        
+        // Dispatch event for other components (Quotes, Lightbox)
+        window.dispatchEvent(new CustomEvent('langChange', { detail: { lang } }));
+    }
+
+    langEn?.addEventListener('click', () => setLanguage('en'));
+    langEs?.addEventListener('click', () => setLanguage('es'));
+    
+    // Init language on load
+    setLanguage('es');
+</script>

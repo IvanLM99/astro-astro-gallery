@@ -1,1 +1,114 @@
+---
+import { Image } from 'astro:assets';
+import img1 from '../assets/2015/IMG-20150719-WA0000.jpg'; // Adjust path if needed
+import img2 from '../assets/2024/IMG_1545.jpeg';
+import img3 from '../assets/2024/IMG_0329.jpeg';
+import imgDivider from '../assets/EclipseUs.jpg';
+---
 
+<div class="story-container">
+    <div class="story-row">
+        <div class="story-img">
+            <Image src={img1} alt="First sky image" width={600} format="webp" />
+        </div>
+        <div class="story-text">
+            <h3 data-t="story1_title">The Origin</h3>
+            <p data-t="story1_text">In 2015, in high school, we were assigned to photograph something that reminded us of philosophy...</p>
+        </div>
+    </div>
+
+    <div class="story-row reverse">
+        <div class="story-text">
+            <h3 data-t="story2_title">The Gravity</h3>
+            <p data-t="story2_text">I related it to the stars, which, no matter how isolated they are, never stop shining...</p>
+        </div>
+        <div class="story-img">
+            <Image src={img2} alt="Sunset" width={600} format="webp" />
+        </div>
+    </div>
+
+    <div class="story-row">
+        <div class="story-img">
+            <Image src={img3} alt="Moon telescope" width={600} format="webp" />
+        </div>
+        <div class="story-text">
+            <h3 data-t="story3_title">The History</h3>
+            <p data-t="story3_text">Allowing the release of energy from the event horizon...</p>
+        </div>
+    </div>
+</div>
+
+<div class="parallax-divider" style={`background-image: url('${imgDivider.src}');`}></div>
+
+<div class="equipment-wrapper">
+    <h2 class="cv-main-title" data-t="equip_title">My Equipment</h2>
+    <div class="equipment-grid">
+        <div class="equip-item">
+            <i class="fas fa-satellite-dish"></i>
+            <span class="equip-label" data-t="eq_dig_tel">Digital Telescope</span>
+            <span class="equip-val">Seestar S30 Pro</span>
+        </div>
+        <div class="equip-item">
+            <i class="fas fa-binoculars"></i>
+            <span class="equip-label" data-t="eq_tel">Telescope</span>
+            <span class="equip-val">Nassa X210</span>
+        </div>
+        <div class="equip-item">
+            <i class="fas fa-camera"></i>
+            <span class="equip-label" data-t="eq_cam">Camera</span>
+            <span class="equip-val">Olympus E420</span>
+        </div>
+    </div>
+</div>
+
+<div class="cv-wrapper">
+    <h2 class="cv-main-title" data-t="profile_title">Professional Profile</h2>
+    
+    <div class="cv-grid">
+        <div class="cv-col">
+            <h4 class="cv-section-head" data-t="exp_title">Experience</h4>
+            <div class="cv-item">
+                <span class="cv-role" data-t="job1_role">AI Engineer & Architect</span>
+                <span class="cv-place" data-t="job1_place">Multinational Hospitality Group</span>
+                <span class="cv-date" data-t="job1_date">May 2025 - Present</span>
+                <p data-t="job1_desc">Leading AI adoption strategies, defining corporate governance for Generative AI, and deploying LLM solutions (Gemini) across global departments to automate complex workflows.</p>
+            </div>
+            <div class="cv-item">
+                <span class="cv-role" data-t="job2_role">Data Scientist</span>
+                <span class="cv-place" data-t="job2_place">Engineering & Innovation Firm</span>
+                <span class="cv-date" data-t="job2_date">Apr 2024 - Oct 2024</span>
+                <p data-t="job2_desc">Developed Computer Vision models (YOLO, Detectron) to digitize road infrastructure assets from terabytes of visual data. Built deep learning pipelines for object detection.</p>
+            </div>
+            <div class="cv-item">
+                <span class="cv-role" data-t="job3_role">Data Analyst</span>
+                <span class="cv-place" data-t="job3_place">Public Utility Services</span>
+                <span class="cv-date" data-t="job3_date">Oct 2022 - May 2023</span>
+                <p data-t="job3_desc">Optimized fleet efficiency and environmental reporting using BI tools and statistical analysis for large-scale urban infrastructure.</p>
+            </div>
+        </div>
+
+        <div class="cv-col">
+            <h4 class="cv-section-head" data-t="skills_title">Core Competencies</h4>
+            <ul class="skills-list">
+                <li>Deep Learning (PyTorch, TensorFlow)</li>
+                <li>Generative AI & LLMs</li>
+                <li>Computer Vision & Image Processing</li>
+                <li>Cloud Architecture (GCP, AWS)</li>
+                <li>Python, SQL, Docker</li>
+                <li>Big Data Platforms (Hadoop, Spark)</li>
+            </ul>
+
+            <h4 class="cv-section-head mt-large" data-t="edu_title">Education</h4>
+            <div class="cv-item">
+                <span class="cv-role" data-t="edu1_role">Master in Artificial Intelligence</span>
+                <span class="cv-place" data-t="edu1_place">University of the Balearic Islands</span>
+                <span class="cv-date">2023 - 2024</span>
+            </div>
+            <div class="cv-item">
+                <span class="cv-role" data-t="edu2_role">B.S. Industrial Electronics Engineering</span>
+                <span class="cv-place" data-t="edu2_place">University of the Balearic Islands</span>
+                <span class="cv-date">2017 - 2023</span>
+            </div>
+        </div>
+    </div>
+</div>

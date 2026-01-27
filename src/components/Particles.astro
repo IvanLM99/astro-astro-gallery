@@ -1,0 +1,85 @@
+<canvas id="bg-canvas"></canvas>
+
+<script>
+    // Optimized Particles Logic
+    const canvas = document.getElementById('bg-canvas') as HTMLCanvasElement;
+    if(canvas) {
+        const ctx = canvas.getContext('2d');
+        let width: number, height: number;
+        let particles: Particle[] = [];
+        
+        const isMobile = window.innerWidth <= 768;
+        const particleCount = isMobile ? 30 : 150; 
+        
+        let mouse = { x: -1000, y: -1000 };
+        let mouseActive = false;
+        let mouseTimer: any;
+
+        const resize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', resize);
+        resize();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouseActive = true;
+            clearTimeout(mouseTimer);
+            mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
+        });
+
+        class Particle {
+            x: number; y: number; vx: number; vy: number; size: number; angle: number;
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.2; 
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1.5;
+                this.angle = Math.random() * Math.PI * 2;
+            }
+            update() {
+                if (mouseActive && !isMobile) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const force = (width * 0.1) / distance; 
+                    if (distance < 200) {
+                        const angle = Math.atan2(dy, dx);
+                        this.vx += Math.cos(angle) * force * 0.01;
+                        this.vy += Math.sin(angle) * force * 0.01;
+                    }
+                } else {
+                    this.angle += 0.01;
+                    this.vx += Math.cos(this.angle) * 0.001;
+                    this.vy += Math.sin(this.angle) * 0.001;
+                }
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0) this.x = width; if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height; if (this.y > height) this.y = 0;
+            }
+            draw() {
+                if(!ctx) return;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`; 
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+
+        const animate = () => {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        };
+        animate();
+    }
+</script>
