@@ -43,11 +43,21 @@ const grouped = validItems.reduce((acc, item) => {
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
-// Create map for client usage
-const lightboxMap = validItems.map(item => ({
-    id: item.id,
-    src: item.imageMetadata.src,
-    ...item
+// 4. Create Client-Side Map
+// We generate a specific thumbnail URL for the JS to use during navigation
+const lightboxMap = await Promise.all(validItems.map(async (item) => {
+    const thumb = await getImage({
+        src: item.imageMetadata,
+        width: 600,
+        format: 'webp',
+        quality: 50 // Lower quality for instant blur loading
+    });
+
+    return {
+        ...item, // 1. Spread raw JSON first
+        src: item.imageMetadata.src, // 2. Overwrite 'src' with optimized full-res path (Fixes 404)
+        thumbnailSrc: thumb.src // 3. Add generated thumbnail path for navigation
+    };
 }));
 ---
 
