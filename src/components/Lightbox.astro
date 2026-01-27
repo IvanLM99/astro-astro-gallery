@@ -1,1 +1,182 @@
+<div id="lightbox">
+    <span class="close-lb" id="lb-close">&times;</span>
+    <button class="lb-nav-btn prev-btn" id="lb-prev"><i class="fas fa-chevron-left"></i></button>
+    <button class="lb-nav-btn next-btn" id="lb-next"><i class="fas fa-chevron-right"></i></button>
 
+    <div class="lb-content">
+        <div class="lb-image-wrapper">
+            <div class="lb-image-container">
+                <img id="lb-img" src="" alt="Expanded View">
+            </div>
+        </div>
+        
+        <div class="lb-info">
+            <h2 id="lb-title">Object Name</h2>
+            
+            <div id="lb-story-container" class="lb-story">
+                <i class="fas fa-quote-left story-icon"></i>
+                <p id="lb-story-text"></p>
+            </div>
+
+            <div class="tech-specs">
+                <div class="spec" id="spec-obj">
+                    <span data-t="lb_obj">OBJECT</span>
+                    <span id="val-obj">--</span>
+                </div>
+                <div class="spec" id="spec-date">
+                    <span data-t="lb_date">DATE</span>
+                    <span id="val-date">--</span>
+                </div>
+                <div class="spec" id="spec-exp">
+                    <span data-t="lb_exp">EXPOSURE</span>
+                    <span id="val-exp">--</span>
+                </div>
+                <div class="spec" id="spec-equip">
+                    <span data-t="lb_equip">EQUIPMENT</span>
+                    <span id="val-equip">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    import { translations } from '../data/translations.js';
+
+    let currentLang = 'es';
+    let currentIndex = 0;
+    // window.galleryData is injected by Gallery.astro
+
+    const lightbox = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lb-img') as HTMLImageElement;
+    const lbTitle = document.getElementById('lb-title');
+    const lbStoryContainer = document.getElementById('lb-story-container');
+    const lbStoryText = document.getElementById('lb-story-text');
+    const lbContainer = document.querySelector('.lb-image-container') as HTMLElement;
+    const lbWrapper = document.querySelector('.lb-image-wrapper') as HTMLElement;
+
+    // Listen for global events
+    window.addEventListener('langChange', (e: any) => {
+        currentLang = e.detail.lang;
+        if(lightbox.classList.contains('active')) updateContent();
+    });
+
+    window.addEventListener('openLightbox', (e: any) => {
+        const id = e.detail.id;
+        const data = window.galleryData || [];
+        currentIndex = data.findIndex(i => i.id === id);
+        if(currentIndex !== -1) {
+            updateContent();
+            lightbox.classList.add('active');
+            document.body.classList.add('no-scroll');
+            resetZoom();
+        }
+    });
+
+    function updateContent() {
+        const data = window.galleryData[currentIndex];
+        if(!data) return;
+
+        lbImg.src = data.src; // Uses the full Astro generated path
+        
+        const title = currentLang === 'en' ? data.title_en : data.title_es;
+        const story = currentLang === 'en' ? data.story_en : data.story_es;
+        const objName = currentLang === 'en' ? (data.object_en || data.object_es) : data.object_es;
+
+        if(lbTitle) lbTitle.innerText = title || objName;
+
+        if (story && story.trim() !== "") {
+            lbStoryContainer.style.display = 'block';
+            lbStoryText.innerText = story;
+        } else {
+            lbStoryContainer.style.display = 'none';
+        }
+
+        // Specs
+        document.getElementById('val-obj').innerText = objName;
+        document.getElementById('val-date').innerText = data.date;
+        document.getElementById('val-exp').innerText = data.exposure;
+        document.getElementById('val-equip').innerText = data.equipment;
+        
+        // Translate labels inside lightbox
+        const specs = ['lb_obj', 'lb_date', 'lb_exp', 'lb_equip'];
+        specs.forEach(key => {
+            const el = document.querySelector(`[data-t="${key}"]`);
+            if(el) el.textContent = translations[currentLang][key];
+        });
+    }
+
+    function changeImage(dir) {
+        const data = window.galleryData;
+        currentIndex += dir;
+        if (currentIndex < 0) currentIndex = data.length - 1;
+        if (currentIndex >= data.length) currentIndex = 0;
+        updateContent();
+        resetZoom();
+    }
+
+    document.getElementById('lb-prev')?.addEventListener('click', () => changeImage(-1));
+    document.getElementById('lb-next')?.addEventListener('click', () => changeImage(1));
+    document.getElementById('lb-close')?.addEventListener('click', closeLightbox);
+
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.classList.remove('no-scroll');
+    }
+
+    // Zoom Logic
+    let scale = 1, pointX = 0, pointY = 0, panning = false, startX = 0, startY = 0;
+
+    function resetZoom() {
+        scale = 1; pointX = 0; pointY = 0; panning = false;
+        lbContainer.style.transform = `translate(0px, 0px) scale(1)`;
+    }
+
+    if(lbWrapper) {
+        lbWrapper.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const xs = (e.offsetX - pointX) / scale;
+            const ys = (e.offsetY - pointY) / scale;
+            const delta = -Math.sign(e.deltaY) * 0.2;
+            const oldScale = scale;
+            scale += delta;
+            scale = Math.min(Math.max(1, scale), 5);
+            if (scale > 1) {
+                pointX += xs * (scale - oldScale);
+                pointY += ys * (scale - oldScale);
+            } else {
+                pointX = 0; pointY = 0;
+            }
+            lbContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        });
+
+        lbWrapper.addEventListener('mousedown', (e) => {
+            if(scale > 1) {
+                e.preventDefault();
+                startX = e.clientX - pointX;
+                startY = e.clientY - pointY;
+                panning = true;
+                lbWrapper.style.cursor = "grabbing";
+            }
+        });
+
+        lbWrapper.addEventListener('mousemove', (e) => {
+            if (!panning) return;
+            e.preventDefault();
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            lbContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        });
+
+        lbWrapper.addEventListener('mouseup', () => { panning = false; lbWrapper.style.cursor = "grab"; });
+        lbWrapper.addEventListener('mouseleave', () => { panning = false; lbWrapper.style.cursor = "grab"; });
+    }
+
+    // Key events
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        if (e.key === "Escape") closeLightbox();
+        if (e.key === "ArrowLeft") changeImage(-1);
+        if (e.key === "ArrowRight") changeImage(1);
+    });
+</script>
