@@ -43,12 +43,11 @@ const grouped = validItems.reduce((acc, item) => {
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
-// 4. Create map for Lightbox
-// FIX: We spread ...item FIRST, then overwrite 'src' with the metadata path
+// Create map for client usage
 const lightboxMap = validItems.map(item => ({
-    ...item,
-    src: item.imageMetadata.src, // <--- This now correctly overwrites the JSON string
-    id: item.id
+    id: item.id,
+    src: item.imageMetadata.src,
+    ...item
 }));
 ---
 
@@ -141,7 +140,7 @@ const lightboxMap = validItems.map(item => ({
         { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author: "- Michio Kaku" }
     ];
 
-    let quoteIndex = 0;
+        let quoteIndex = 0;
     const quoteTextEl = document.getElementById('quote-text');
     const quoteAuthEl = document.getElementById('quote-author');
     let currentLang = 'es';
@@ -154,6 +153,38 @@ const lightboxMap = validItems.map(item => ({
         quoteAuthEl.textContent = q.author;
     }
 
+    // Cycle with Fade
+    function cycleQuotes() {
+        if(!quoteTextEl || !quoteAuthEl) return;
+        
+        // 1. Fade Out
+        quoteTextEl.classList.remove('visible');
+        quoteAuthEl.classList.remove('visible');
+
+        // 2. Wait, Change, Fade In
+        setTimeout(() => {
+            // Pick Random index different from current
+            let newIndex = Math.floor(Math.random() * quotes.length);
+            while(newIndex === quoteIndex && quotes.length > 1) {
+                newIndex = Math.floor(Math.random() * quotes.length);
+            }
+            quoteIndex = newIndex;
+            
+            updateQuoteDisplay();
+            
+            quoteTextEl.classList.add('visible');
+            quoteAuthEl.classList.add('visible');
+        }, 1000); 
+    }
+
+    // Start Loop
+    setTimeout(() => {
+        if(quoteTextEl) quoteTextEl.classList.add('visible');
+        if(quoteAuthEl) quoteAuthEl.classList.add('visible');
+        setInterval(cycleQuotes, 8000); 
+    }, 500);
+
+    // Lang Change Listener
     window.addEventListener('langChange', (e: any) => {
         currentLang = e.detail.lang;
         updateQuoteDisplay();
@@ -190,16 +221,15 @@ const lightboxMap = validItems.map(item => ({
     // Gallery Item Click (Triggers Lightbox)
     const items = document.querySelectorAll('.g-item');
     items.forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
             const id = item.getAttribute('data-id');
-            // Dispatch event to open lightbox
-            window.dispatchEvent(new CustomEvent('openLightbox', { detail: { id } }));
+            // Get the current thumbnail src from the DOM image
+            const thumbImg = item.querySelector('img') as HTMLImageElement;
+            const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
+
+            window.dispatchEvent(new CustomEvent('openLightbox', { 
+                detail: { id, thumbSrc } 
+            }));
         });
     });
-
-    // Init Quote
-    setTimeout(() => {
-        if(quoteTextEl) quoteTextEl.classList.add('visible');
-        if(quoteAuthEl) quoteAuthEl.classList.add('visible');
-    }, 500);
 </script>
