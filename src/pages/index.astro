@@ -2,24 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Gallery from '../components/Gallery.astro';
-import Portfolio from '../components/Portfolio.astro';
 import Lightbox from '../components/Lightbox.astro';
+
+// Redirect to gallery by default, or handle language
+const preferredLang = Astro.cookies.get('lang')?.value || 'es';
+return Astro.redirect(`/${preferredLang}/gallery`);
 ---
-
-<Layout title="Cosmos | Iván López">
-    <Navbar />
-
-    <main class="content-container">
-        <!-- GALLERY TAB -->
-        <section id="gallery-tab" class="fade-in">
-            <Gallery />
-        </section>
-
-        <!-- PORTFOLIO TAB (Hidden by default) -->
-        <section id="portfolio-tab" class="hidden">
-            <Portfolio />
-        </section>
-    </main>
-
-    <Lightbox />
-</Layout>
