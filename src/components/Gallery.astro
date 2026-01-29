@@ -2,6 +2,8 @@
 import { Image, getImage } from 'astro:assets';
 import galleryDataRaw from '../data/gallery_data.json';
 
+const { lang = 'es' } = Astro.props;
+
 // 1. Sort Data
 const galleryData = galleryDataRaw.sort((a, b) => {
     const d1 = new Date(Number(a.year), Number(a.month) - 1, Number(a.day));
@@ -25,7 +27,7 @@ const resolvedData = await Promise.all(galleryData.map(async (item) => {
     if (!imageImport) {
         imageImport = normalizedImages[originalPath.toLowerCase()];
     }
-    
+
     if (!imageImport) {
         console.error(`❌ Image missing: ${originalPath}`);
         return null;
@@ -49,15 +51,15 @@ const grouped = validItems.reduce((acc, item) => {
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
-// 4. Create Client-Side Map
+// 4. Create Client-Side Map with Smaller Thumbnails
 const lightboxMap = await Promise.all(validItems.map(async (item) => {
     let thumbnailSrc = '';
     try {
         const thumb = await getImage({
             src: item.imageMetadata,
-            width: 20,
+            width: 15, // Reduced from 20 for better performance
             format: 'webp',
-            quality: 20
+            quality: 15 // Reduced from 20
         });
         thumbnailSrc = thumb.src;
     } catch (e) {
@@ -65,7 +67,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     }
 
     return {
-        ...item, 
+        ...item,
         src: item.imageMetadata.src,
         thumbnailSrc: thumbnailSrc
     };
@@ -74,10 +76,10 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
 <header class="gallery-header">
     <div class="quote-container">
-        <h1 id="quote-text" class="philosophical-quote">"Estamos hechos de polvo de estrellas."</h1>
-        <p id="quote-author" class="quote-author">- Carl Sagan</p>
+        <h1 id="quote-text" class="philosophical-quote"></h1>
+        <p id="quote-author" class="quote-author"></p>
     </div>
-    
+
     <div class="filters-wrapper">
         <div class="filters">
             <button class="filter-btn active" data-filter="all" data-t="filter_all">All</button>
@@ -97,13 +99,14 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             <div class="gallery-grid">
                 {grouped[year].map((item, index) => (
                     <div class={`g-item ${item.category}`} data-id={item.id}>
-                        <Image 
-                            src={item.imageMetadata} 
+                        <Image
+                            src={item.imageMetadata}
                             alt={item.title_en}
-                            width={600} 
-                            quality={80}
+                            width={400}  <!-- Reduced from 600 for thumbnails -->
+                            quality={75}  <!-- Slightly reduced -->
                             format="webp"
-                            loading={index < 4 ? "eager" : "lazy"} 
+                            loading={index < 4 ? "eager" : "lazy"}
+                            decoding="async"
                         />
                         <div class="overlay"><span data-t="details">DETAILS</span></div>
                     </div>
@@ -113,14 +116,15 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     ))}
 </div>
 
-<script define:vars={{ lightboxMap }}>
+<script define:vars={{ lightboxMap, initialLang: lang }}>
     window.galleryData = lightboxMap;
+    window.initialLang = initialLang;
 </script>
 
 <script>
     import { translations } from '../data/translations.js';
 
-    // Quote Logic
+    // Quote Logic - Improved Randomization without repetition
     const quotes = [
         { text_en: "\"We are made of starstuff.\"", text_es: "\"Estamos hechos de polvo de estrellas.\"", author: "- Carl Sagan" },
         { text_en: "\"Somewhere, something incredible is waiting to be known.\"", text_es: "\"En algún lugar, algo increíble espera ser descubierto.\"", author: "- Carl Sagan" },
@@ -156,50 +160,69 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author: "- Michio Kaku" }
     ];
 
-    let quoteIndex = 0;
+
+    let currentLang = window.initialLang || 'es';
+    let quoteQueue = [];
+    let currentQuoteIndex = 0;
+    
     const quoteTextEl = document.getElementById('quote-text');
     const quoteAuthEl = document.getElementById('quote-author');
-    let currentLang = 'es';
 
-    // Shuffle function (Fisher-Yates) to prevent repetition
-    function shuffleQuotes() {
-        for (let i = quotes.length - 1; i > 0; i--) {
+    // Shuffle array using Fisher-Yates
+    function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [quotes[i], quotes[j]] = [quotes[j], quotes[i]];
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
         }
+        return newArray;
     }
-    shuffleQuotes();
+
+    // Initialize queue with shuffled quotes
+    function initQuoteQueue() {
+        quoteQueue = shuffleArray(quotes);
+        currentQuoteIndex = 0;
+    }
 
     function updateQuoteDisplay() {
         if(!quoteTextEl || !quoteAuthEl) return;
-        const q = quotes[quoteIndex];
+        const q = quoteQueue[currentQuoteIndex];
         const text = currentLang === 'en' ? q.text_en : q.text_es;
-        quoteTextEl.textContent = text;
-        quoteAuthEl.textContent = q.author;
-    }
-
-    function cycleQuotes() {
-        if(!quoteTextEl || !quoteAuthEl) return;
         
+        // Fade out
         quoteTextEl.classList.remove('visible');
         quoteAuthEl.classList.remove('visible');
-
+        
         setTimeout(() => {
-            quoteIndex = (quoteIndex + 1) % quotes.length;
-            if(quoteIndex === 0) shuffleQuotes();
+            quoteTextEl.textContent = text;
+            quoteAuthEl.textContent = q.author;
             
-            updateQuoteDisplay();
-            
+            // Fade in
             quoteTextEl.classList.add('visible');
             quoteAuthEl.classList.add('visible');
-        }, 1000); 
+        }, 1000); // Longer transition time
     }
 
+    function nextQuote() {
+        currentQuoteIndex++;
+        if (currentQuoteIndex >= quoteQueue.length) {
+            initQuoteQueue(); // Reshuffle when all shown
+        }
+        updateQuoteDisplay();
+    }
+
+    // Initialize
+    initQuoteQueue();
+    quoteTextEl.textContent = currentLang === 'en' ? quoteQueue[0].text_en : quoteQueue[0].text_es;
+    quoteAuthEl.textContent = quoteQueue[0].author;
+    
     setTimeout(() => {
         if(quoteTextEl) quoteTextEl.classList.add('visible');
         if(quoteAuthEl) quoteAuthEl.classList.add('visible');
-        setInterval(cycleQuotes, 8000); 
-    }, 500);
+    }, 100);
+
+    // Change quote every 10 seconds (slower for better readability)
+    setInterval(nextQuote, 10000);
 
     // Lang Change Listener
     window.addEventListener('langChange', (e) => {
@@ -215,7 +238,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         btn.addEventListener('click', (e) => {
             const target = e.target;
             const category = target.getAttribute('data-filter');
-            
+
             filterBtns.forEach(b => b.classList.remove('active'));
             target.classList.add('active');
 
@@ -235,7 +258,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         });
     });
 
-    // Gallery Item Click (Triggers Lightbox)
+    // Gallery Item Click
     const items = document.querySelectorAll('.g-item');
     items.forEach(item => {
         item.addEventListener('click', (e) => {
@@ -243,8 +266,12 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             const thumbImg = item.querySelector('img');
             const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
 
-            window.dispatchEvent(new CustomEvent('openLightbox', { 
-                detail: { id, thumbSrc } 
+            // Update URL without reloading
+            const newUrl = `${window.location.pathname}?image=${id}`;
+            window.history.pushState({ imageId: id }, '', newUrl);
+
+            window.dispatchEvent(new CustomEvent('openLightbox', {
+                detail: { id, thumbSrc }
             }));
         });
     });
