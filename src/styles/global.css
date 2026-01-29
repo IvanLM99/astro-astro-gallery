@@ -58,12 +58,16 @@ nav.nav-hidden { transform: translateY(-100%); }
 nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40px; }
 @media (min-width: 769px) { nav.nav-faded { backdrop-filter: blur(10px); } }
 
-.site-title { font-family: var(--font-serif); font-size: 1.5rem; letter-spacing: 3px; color: var(--accent); }
+.site-title { 
+    font-family: var(--font-serif); font-size: 1.5rem; letter-spacing: 3px; 
+    color: var(--accent); text-decoration: none; 
+}
 .nav-center { display: flex; gap: 10px; }
 .menu-btn {
     background: none; border: none; color: var(--text-muted);
     font-family: var(--font-sans); font-size: 0.85rem; letter-spacing: 2px;
     padding: 10px; cursor: pointer; transition: all 0.3s ease;
+    text-decoration: none; display: inline-block;
 }
 .menu-btn.active, .menu-btn:hover { color: var(--accent); }
 .lang-select { font-size: 0.8rem; color: var(--text-muted); cursor: pointer; }
@@ -142,15 +146,21 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px;
 }
 
-/* Portfolio */
+/* Portfolio (Updated to Grid) */
 .story-container { max-width: 1100px; margin: 0 auto; padding-top: 40px; }
-.story-row { display: flex; align-items: center; gap: 80px; margin-bottom: 120px; }
+.story-row { 
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; 
+    align-items: center; margin-bottom: 120px; 
+}
 .story-img { flex: 1; overflow: hidden; }
 .story-img img { width: 100%; height: auto; display: block; filter: brightness(0.9); }
 .story-text { flex: 1; }
 .story-text h3 { font-family: var(--font-serif); font-size: 2.5rem; margin-bottom: 25px; color: var(--accent); }
 .story-text p { font-size: 1.05rem; line-height: 1.8; color: #bbb; font-family: var(--font-serif); }
-.story-row.reverse { flex-direction: row-reverse; }
+
+.story-row.reverse { direction: rtl; /* Switches order visually */ }
+.story-row.reverse > * { direction: ltr; /* Reset text direction */ }
+
 .parallax-divider {
     height: 350px; background-attachment: fixed; background-size: cover;
     background-position: center; margin: 80px 0; opacity: 0.6; filter: brightness(0.8);
@@ -201,31 +211,36 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
 }
 @media (max-width: 768px) { #lightbox { backdrop-filter: none; } }
 #lightbox.active { display: flex; opacity: 1; }
+
 .lb-content { 
     display: flex; flex-direction: column; align-items: center; 
     width: 100%; max-width: 1200px; padding: 20px;
     max-height: 100vh; overflow-y: auto;
 }
+
 .lb-image-wrapper {
     width: 100%; max-height: 65vh; display: flex; justify-content: center; align-items: center;
-    margin-bottom: 20px; overflow: hidden; position: relative; cursor: grab;
+    margin-bottom: 20px; overflow: hidden; position: relative; 
+    cursor: default; touch-action: none;
 }
 .lb-image-wrapper:active { cursor: grabbing; }
+
 .lb-image-container { transform-origin: center center; transition: transform 0.1s ease-out; }
+
 #lb-img { 
     max-height: 65vh; max-width: 100%; 
     box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
     display: block;
-    transition: filter 0.5s ease; /* Smooth blur transition */
+    transition: opacity 0.5s ease, filter 0.5s ease, transform 0.3s ease;
+    will-change: transform, opacity;
 }
 
-/* New Class for Blur Effect */
-.blur-loading {
-    filter: blur(15px);
-}
+/* Blur Effect Class */
+.blur-loading { filter: blur(15px); }
 
 .lb-info { text-align: center; width: 100%; animation: slideUp 0.5s ease forwards; padding-bottom: 40px; }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
 #lb-title { 
     font-family: var(--font-serif); font-size: 2.2rem; margin-bottom: 20px; 
     color: #fff; letter-spacing: 1px; font-weight: 400;
@@ -254,125 +269,11 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
 .lb-nav-btn:hover { color: #fff; transform: translateY(-50%) scale(1.1); }
 .prev-btn { left: 20px; }
 .next-btn { right: 20px; }
+.zoom-hint { font-size: 0.7rem; color: #666; margin-top: 15px; font-style: italic; }
 
-/* Add to existing CSS */
-
-/* Portfolio Grid Layout */
-.story-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-    margin-bottom: 120px;
-}
-
-.story-row.reverse {
-    direction: rtl; /* Switches order visually */
-}
-
-.story-row.reverse > * {
-    direction: ltr; /* Reset text direction */
-}
-
-/* Mobile Portfolio Layout */
+/* Unified Mobile Styles */
 @media(max-width: 768px) {
-    .story-row,
-    .story-row.reverse {
-        grid-template-columns: 1fr;
-        gap: 30px;
-        direction: ltr;
-    }
-    
-    .story-row.reverse > * {
-        direction: ltr;
-    }
-    
-    .story-img {
-        order: 0 !important;
-    }
-    
-    .story-text {
-        order: 1 !important;
-    }
-    
-    /* Better filter scrolling */
-    .filters-wrapper {
-        overflow-x: scroll;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding-bottom: 15px;
-        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-    }
-    
-    .filters {
-        justify-content: flex-start;
-        padding: 0 10px;
-        gap: 8px;
-    }
-    
-    .filter-btn {
-        flex-shrink: 0;
-        font-size: 0.75rem;
-        padding: 6px 12px;
-    }
-    
-    /* Lightbox improvements */
-    .lb-image-wrapper {
-        touch-action: pan-y pinch-zoom; /* Allow browser zoom */
-    }
-    
-    .zoom-hint {
-        font-size: 0.7rem;
-        color: #666;
-        margin-top: 15px;
-        font-style: italic;
-    }
-    
-    /* Quote transitions longer */
-    .philosophical-quote,
-    .quote-author {
-        transition: opacity 1.5s ease-in-out; /* Slower fade */
-    }
-}
-
-/* Smooth image transitions in lightbox */
-#lb-img {
-    max-height: 65vh; 
-    max-width: 100%;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    display: block;
-    transition: opacity 0.5s ease, filter 0.5s ease, transform 0.3s ease;
-    will-change: transform, opacity;
-}
-
-/* Better grab cursor */
-.lb-image-wrapper {
-    cursor: default;
-    touch-action: none;
-}
-
-.lb-image-wrapper:active {
-    cursor: grabbing;
-}
-
-/* Hide scrollbar for filters on desktop too if needed */
-.filters-wrapper::-webkit-scrollbar {
-    display: none;
-}
-
-/* Ensure links have no underline */
-.menu-btn {
-    text-decoration: none;
-    display: inline-block;
-}
-
-.site-title {
-    text-decoration: none;
-    color: inherit;
-}
-
-/* Mobile */
-@media(max-width: 768px) {
+    /* Nav & Layout */
     nav { padding: 15px 20px; justify-content: center; flex-direction: column; gap: 15px; }
     nav.nav-faded { padding: 10px 20px; }
     .nav-left { margin-bottom: 5px; }
@@ -380,18 +281,43 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     .menu-btn { font-size: 0.8rem; margin: 0; }
     .nav-right { margin-top: 5px; }
     .content-container { padding: 20px 15px; }
+    
+    /* Gallery & Filters */
     .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .story-row, .story-row.reverse { flex-direction: column; gap: 30px; }
+    
+    .filters-wrapper {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 15px;
+        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    }
+    .filters { justify-content: flex-start; padding: 0 10px; gap: 8px; }
+    .filter-btn { flex-shrink: 0; font-size: 0.75rem; padding: 6px 12px; }
+
+    /* Portfolio Mobile */
+    .story-row, .story-row.reverse { 
+        grid-template-columns: 1fr; gap: 30px; direction: ltr; 
+        flex-direction: column; /* Fallback */
+    }
+    .story-row.reverse > * { direction: ltr; }
+    .story-img { order: 0 !important; }
+    .story-text { order: 1 !important; }
     .story-text h3 { font-size: 1.8rem; }
+    
+    /* CV & Misc */
     .cv-grid { grid-template-columns: 1fr; gap: 40px; }
+    .equipment-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
     .quote-container { min-height: 200px; }
-    .philosophical-quote { font-size: 1.6rem; }
-    .filters { justify-content: flex-start; }
+    .philosophical-quote { font-size: 1.6rem; transition: opacity 1.5s ease-in-out; }
+    .quote-author { transition: opacity 1.5s ease-in-out; }
+    
+    /* Lightbox Mobile */
     .lb-content img, #lb-img { max-height: 50vh; }
+    .lb-image-wrapper { touch-action: pan-y pinch-zoom; }
     .tech-specs { gap: 20px; flex-direction: column; }
     .lb-story { font-size: 1rem; }
     .lb-nav-btn { font-size: 2rem; padding: 10px; }
     .prev-btn { left: 5px; }
     .next-btn { right: 5px; }
-    .equipment-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
 }
