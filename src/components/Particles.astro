@@ -7,11 +7,12 @@
         let width, height;
         let particles = [];
         let shootingStar = null;
-        
+        let animationId = null;
+        let isPaused = false;
+
         const isMobile = window.innerWidth <= 768;
-        // Reduced particles for mobile performance
-        const particleCount = isMobile ? 30 : 150; 
-        
+        const particleCount = isMobile ? 30 : 175; // Reduced for performance
+
         let mouse = { x: -1000, y: -1000 };
         let mouseActive = false;
         let mouseTimer;
@@ -31,32 +32,43 @@
             mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
         });
 
-        // === NORMAL PARTICLE ===
+        // Pause/Resume based on lightbox state
+        window.addEventListener('lightboxStateChange', (e) => {
+            if (e.detail.open) {
+                isPaused = true;
+            } else {
+                isPaused = false;
+                if (!animationId) animate();
+            }
+        });
+
         class Particle {
             constructor() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 0.2; 
-                this.vy = (Math.random() - 0.5) * 0.2;
-                this.size = Math.random() * 1.5;
+                this.vx = (Math.random() - 0.5) * 0.15;
+                this.vy = (Math.random() - 0.5) * 0.15;
+                this.size = Math.random() * 1.2;
                 this.angle = Math.random() * Math.PI * 2;
             }
             update() {
+                if (isPaused) return;
+                
                 if (mouseActive && !isMobile) {
                     const dx = mouse.x - this.x;
                     const dy = mouse.y - this.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    const force = (width * 0.1) / distance; 
-                    if (distance < 200) {
+                    const force = (width * 0.08) / distance;
+                    if (distance < 150) {
                         const angle = Math.atan2(dy, dx);
-                        this.vx += Math.cos(angle) * force * 0.01;
-                        this.vy += Math.sin(angle) * force * 0.01;
+                        this.vx += Math.cos(angle) * force * 0.005;
+                        this.vy += Math.sin(angle) * force * 0.005;
                     }
-                } else {
-                    this.angle += 0.01;
-                    this.vx += Math.cos(this.angle) * 0.001;
-                    this.vy += Math.sin(this.angle) * 0.001;
                 }
+                this.angle += 0.008;
+                this.vx += Math.cos(this.angle) * 0.0005;
+                this.vy += Math.sin(this.angle) * 0.0005;
+                
                 this.vx *= 0.98;
                 this.vy *= 0.98;
                 this.x += this.vx;
@@ -67,14 +79,13 @@
             }
             draw() {
                 if(!ctx) return;
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`; 
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.1})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        // === SHOOTING STAR (Restored from old code) ===
         class ShootingStar {
             constructor() {
                 this.reset();
@@ -85,29 +96,30 @@
                 this.len = Math.random() * 80 + 10;
                 this.speed = Math.random() * 10 + 6;
                 this.size = Math.random() * 1 + 0.1;
-                // Wait between 3 to 6 seconds
-                this.waitTime = new Date().getTime() + Math.random() * 3000 + 3000;
+                this.waitTime = new Date().getTime() + Math.random() * 3000 + 4000;
                 this.active = false;
             }
             update() {
+                if (isPaused) return;
+                
                 if (this.active) {
                     this.x -= this.speed;
                     this.y += this.speed;
                     if (this.x < 0 || this.y >= height) {
                         this.active = false;
-                        this.waitTime = new Date().getTime() + Math.random() * 5000 + 2000; 
+                        this.waitTime = new Date().getTime() + Math.random() * 6000 + 3000;
                     }
                 } else {
                     if (this.waitTime < new Date().getTime()) {
                         this.active = true;
-                        this.x = Math.random() * width + 200; 
+                        this.x = Math.random() * width + 200;
                         this.y = -50;
                     }
                 }
             }
             draw() {
                 if (this.active && ctx) {
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
                     ctx.lineWidth = this.size;
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
@@ -117,23 +129,24 @@
             }
         }
 
-        // Initialize
         for (let i = 0; i < particleCount; i++) particles.push(new Particle());
         shootingStar = new ShootingStar();
 
         const animate = () => {
             if(!ctx) return;
-            ctx.clearRect(0, 0, width, height);
             
-            particles.forEach(p => { p.update(); p.draw(); });
-            
-            if (shootingStar) { 
-                shootingStar.update(); 
-                shootingStar.draw(); 
+            if (!isPaused) {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                if (shootingStar) {
+                    shootingStar.update();
+                    shootingStar.draw();
+                }
             }
             
-            requestAnimationFrame(animate);
+            animationId = requestAnimationFrame(animate);
         };
+        
         animate();
     }
 </script>
