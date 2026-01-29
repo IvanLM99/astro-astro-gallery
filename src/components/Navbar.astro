@@ -1,17 +1,24 @@
+---
+const { activeTab = 'gallery', lang = 'es' } = Astro.props;
+
+const galleryUrl = lang === 'es' ? '/gallery' : `/${lang}/gallery`;
+const universeUrl = lang === 'es' ? '/universe' : `/${lang}/universe`;
+---
+
 <nav id="navbar">
     <div class="nav-left">
-        <span class="site-title">I. LOPEZ</span>
+        <a href={`/${lang}`} class="site-title">I. LOPEZ</a>
     </div>
-    
+
     <div class="nav-center">
-        <button class="menu-btn active" id="btn-gallery">GALERÍA</button>
-        <button class="menu-btn" id="btn-universe">MI UNIVERSO</button>
+        <a href={galleryUrl} class={`menu-btn ${activeTab === 'gallery' ? 'active' : ''}`} id="btn-gallery" data-t="nav_gallery">GALERÍA</a>
+        <a href={universeUrl} class={`menu-btn ${activeTab === 'universe' ? 'active' : ''}`} id="btn-universe" data-t="nav_portfolio">MI UNIVERSO</a>
     </div>
 
     <div class="nav-right">
         <div class="lang-select">
-            <span id="lang-en" class="lang">EN</span> / 
-            <span id="lang-es" class="lang active">ES</span>
+            <span id="lang-en" class={`lang ${lang === 'en' ? 'active' : ''}`} data-lang="en">EN</span> /
+            <span id="lang-es" class={`lang ${lang === 'es' ? 'active' : ''}`} data-lang="es">ES</span>
         </div>
     </div>
 </nav>
@@ -19,7 +26,13 @@
 <script>
     import { translations } from '../data/translations.js';
 
-    // Navbar Scroll Logic
+    // Scroll to top on page load/refresh (fixes tab switch scroll issue)
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    // Navbar scroll hide/show
     const navbar = document.getElementById('navbar');
     let lastScrollY = window.scrollY;
 
@@ -36,8 +49,7 @@
             } else {
                 navbar.classList.remove('nav-faded');
             }
-            
-            // Scroll top button visibility logic
+
             const stBtn = document.getElementById('scroll-top-btn');
             if(stBtn) {
                  if(currentScrollY > 500) stBtn.classList.add('visible');
@@ -47,65 +59,37 @@
         lastScrollY = currentScrollY;
     }, {passive: true});
 
-    // Tab Switching Logic
-    const btnGallery = document.getElementById('btn-gallery');
-    const btnUniverse = document.getElementById('btn-universe');
-    const galleryTab = document.getElementById('gallery-tab');
-    const portfolioTab = document.getElementById('portfolio-tab');
-
-    function switchTab(tab) {
-        if(!galleryTab || !portfolioTab || !btnGallery || !btnUniverse) return;
-        
-        if(tab === 'gallery') {
-            galleryTab.classList.remove('hidden');
-            galleryTab.classList.add('fade-in');
-            portfolioTab.classList.add('hidden');
-            btnGallery.classList.add('active');
-            btnUniverse.classList.remove('active');
-        } else {
-            portfolioTab.classList.remove('hidden');
-            portfolioTab.classList.add('fade-in');
-            galleryTab.classList.add('hidden');
-            btnUniverse.classList.add('active');
-            btnGallery.classList.remove('active');
-        }
-    }
-
-    btnGallery?.addEventListener('click', () => switchTab('gallery'));
-    btnUniverse?.addEventListener('click', () => switchTab('portfolio'));
-
     // Language Logic
     const langEn = document.getElementById('lang-en');
     const langEs = document.getElementById('lang-es');
-    let currentLang = 'es';
-
+    
     function setLanguage(lang) {
-        currentLang = lang;
-        const elements = document.querySelectorAll('[data-t]');
-        elements.forEach((el) => {
-            const key = el.getAttribute('data-t');
-            if (translations[lang] && translations[lang][key]) {
-                el.textContent = translations[lang][key];
-            } else if (key?.startsWith('cat_')) {
-                // Fallback for categories
-                const catName = key.replace('cat_', '');
-                el.textContent = catName.charAt(0).toUpperCase() + catName.slice(1);
-            }
-        });
-
-        if(btnGallery) btnGallery.textContent = translations[lang].nav_gallery;
-        if(btnUniverse) btnUniverse.textContent = translations[lang].nav_portfolio;
-
+        // Store preference
+        localStorage.setItem('preferred-lang', lang);
+        
+        // Update active state
         langEn?.classList.toggle('active', lang === 'en');
         langEs?.classList.toggle('active', lang === 'es');
         
-        // Dispatch event for other components (Quotes, Lightbox)
+        // Dispatch event for other components
         window.dispatchEvent(new CustomEvent('langChange', { detail: { lang } }));
+        
+        // Navigate to same page in new language
+        const currentPath = window.location.pathname;
+        const newPath = currentPath.replace(/^\/(es|en)\//, `/${lang}/`);
+        if (newPath !== currentPath) {
+            window.location.href = newPath + window.location.search;
+        }
     }
 
     langEn?.addEventListener('click', () => setLanguage('en'));
     langEs?.addEventListener('click', () => setLanguage('es'));
-    
-    // Init language on load
-    setLanguage('es');
+
+    // Set initial language from URL or localStorage
+    const pathLang = window.location.pathname.match(/^\/(en|es)\//);
+    if (pathLang) {
+        setLanguage(pathLang[1]);
+    } else if (localStorage.getItem('preferred-lang')) {
+        setLanguage(localStorage.getItem('preferred-lang'));
+    }
 </script>
