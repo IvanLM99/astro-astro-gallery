@@ -1,0 +1,29 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Gallery from '../../components/Gallery.astro';
+import Lightbox from '../../components/Lightbox.astro';
+import galleryDataRaw from '../../data/gallery_data.json';
+
+export async function getStaticPaths() {
+  const paths = galleryDataRaw.map(item => ({
+    params: { id: item.id },
+    props: { imageData: item }
+  }));
+  return paths;
+}
+
+const { id } = Astro.params;
+const { imageData } = Astro.props;
+const lang = Astro.url.searchParams.get('lang') || 'es';
+---
+
+<Layout title={`${imageData.title_en} | Cosmos`} lang={lang}>
+  <Navbar activeTab="gallery" lang={lang} />
+  
+  <main class="content-container">
+    <Gallery lang={lang} />
+  </main>
+
+  <Lightbox lang={lang} initialImageId={id} />
+</Layout>
