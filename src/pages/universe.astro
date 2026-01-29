@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Portfolio from '../components/Portfolio.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang = 'es' } = Astro.params;
+---
+
+<Layout title="My Universe | Cosmos - Iván López" lang={lang}>
+  <Navbar activeTab="universe" lang={lang} />
+  
+  <main class="content-container">
+    <section id="portfolio-tab" class="fade-in">
+      <Portfolio lang={lang} />
+    </section>
+  </main>
+</Layout>
