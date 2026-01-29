@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Gallery from '../components/Gallery.astro';
+import Lightbox from '../components/Lightbox.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang = 'es' } = Astro.params;
+---
+
+<Layout title="Gallery | Cosmos - Iván López" lang={lang}>
+  <Navbar activeTab="gallery" lang={lang} />
+  
+  <main class="content-container">
+    <section id="gallery-tab" class="fade-in">
+      <Gallery lang={lang} />
+    </section>
+  </main>
+
+  <Lightbox lang={lang} />
+</Layout>
