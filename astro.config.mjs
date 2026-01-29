@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   site: 'https://ivanlm99.github.io',
-  base: '/astro-astro-gallery/', // Change if your repo is named differently
+  base: '/astro-astro-gallery', // Change if your repo is named differently
   i18n: {
     defaultLocale: 'es',
     locales: ['es', 'en'],
