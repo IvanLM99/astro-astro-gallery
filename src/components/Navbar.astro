@@ -3,8 +3,6 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 
 const { activeTab = 'gallery', lang = 'es' } = Astro.props;
 
-// BEST PRACTICE: Use Astro's built-in helper for i18n URLs. 
-// This automatically handles the 'base' path and the language prefix.
 const homeUrl = getRelativeLocaleUrl(lang, '');
 const galleryUrl = getRelativeLocaleUrl(lang, 'gallery');
 const universeUrl = getRelativeLocaleUrl(lang, 'universe');
@@ -31,7 +29,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
 <script define:vars={{ currentLang: lang, baseUrl: import.meta.env.BASE_URL }}>
     import { translations } from '../data/translations.js';
 
-    // Scroll to top on page load/refresh (fixes tab switch scroll issue)
+    // Scroll to top on page load/refresh
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
@@ -73,34 +71,41 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
 
         localStorage.setItem('preferred-lang', targetLang);
         
-        // CLEANER URL REPLACEMENT logic
-        // Get current path relative to the site
+        // 1. Cleanly handle Base URL (remove trailing slash for consistency)
+        // baseUrl comes from astro.config, usually '/astro-astro-gallery/'
+        const cleanBase = baseUrl.replace(/\/$/, '');
+        
+        // 2. Get current path relative to domain
         let path = window.location.pathname;
         
-        // Remove the Base URL from the path for manipulation
-        // e.g. "/astro-astro-gallery/en/gallery" -> "/en/gallery"
-        if (path.startsWith(baseUrl)) {
-            path = path.slice(baseUrl.length);
+        // 3. Strip the base URL from the start of the path
+        if (path.startsWith(cleanBase)) {
+            path = path.slice(cleanBase.length);
         }
 
-        // Logic to switch language prefix
-        // If we are switching TO English
+        // 4. Remove existing language prefix (e.g. '/en/' or '/es/') if present
+        // Matches /en, /en/, /es, /es/ at start of string
+        path = path.replace(/^\/(en|es)(\/|$)/, '/');
+
+        // Ensure path starts with /
+        if (!path.startsWith('/')) path = '/' + path;
+
+        // 5. Build new URL
+        let newUrl = cleanBase;
+
         if (targetLang === 'en') {
-             // If currently root (spanish default), add /en
-             if (!path.startsWith('/en')) {
-                 path = '/en' + path;
-             }
-        } 
-        // If switching TO Spanish (default)
-        else if (targetLang === 'es') {
-            // Remove /en if it exists
-            path = path.replace(/^\/en/, '') || '/';
+            newUrl += '/en' + path;
+        } else {
+            // Default lang 'es' usually doesn't need a prefix in Astro default config
+            // unless configured otherwise. Based on your usage, 'es' is root.
+            newUrl += path;
         }
 
-        // Construct full URL ensuring double slashes don't happen
-        const finalUrl = (baseUrl + path).replace(/\/\//g, '/');
+        // 6. Clean up any double slashes (//) that might have occurred
+        newUrl = newUrl.replace(/\/\//g, '/');
         
-        window.location.href = finalUrl + window.location.search;
+        // 7. Redirect preserving query parameters
+        window.location.href = newUrl + window.location.search;
     }
 
     langEn?.addEventListener('click', () => setLanguage('en'));
