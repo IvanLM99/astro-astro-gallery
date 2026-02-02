@@ -5,15 +5,12 @@ import Footer from '../components/Footer.astro';
 
 interface Props {
 	title: string;
-    lang?: string; // Add lang to props interface
+    lang?: string; 
 }
 
 const { title, lang = 'es' } = Astro.props;
 
-// BEST PRACTICE: Generate dynamic site URL
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-
-// Handle social image path (needs base)
 const socialImageURL = new URL('/astro-astro-gallery/assets/EclipseUs.jpg', Astro.site);
 ---
 
@@ -35,7 +32,6 @@ const socialImageURL = new URL('/astro-astro-gallery/assets/EclipseUs.jpg', Astr
         <meta property="og:url" content={canonicalURL}>
         <meta property="og:title" content={title}>
         <meta property="og:description" content="Capturing the invisible. Astrophotography gallery & Professional Portfolio.">
-        <!-- Ensure you have an image at public/assets/EclipseUs.jpg or similar -->
         <meta property="og:image" content={socialImageURL}> 
 
         <!-- Twitter -->
@@ -76,6 +72,23 @@ const socialImageURL = new URL('/astro-astro-gallery/assets/EclipseUs.jpg', Astr
         <div id="loader-overlay">
             <div class="accretion-disk"></div>
         </div>
+
+        <!-- FIX: Script to handle loader logic only once per session -->
+        <script is:inline>
+            (function() {
+                const loader = document.getElementById('loader-overlay');
+                if (sessionStorage.getItem('cosmos_intro_shown')) {
+                    // If visited before, hide immediately without animation
+                    if(loader) {
+                        loader.style.display = 'none';
+                        loader.style.animation = 'none';
+                    }
+                } else {
+                    // First visit: Set flag so it doesn't show again
+                    sessionStorage.setItem('cosmos_intro_shown', 'true');
+                }
+            })();
+        </script>
 
 		<slot />
 
