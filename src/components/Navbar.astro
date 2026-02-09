@@ -26,14 +26,16 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     </div>
 </nav>
 
-<script define:vars={{ currentLang: lang }}>
-    import { translations } from '../data/translations.js';
-
+<script is:inline>
     // Scroll to top on page load/refresh
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
     window.scrollTo(0, 0);
+</script>
+
+<script>
+    import { translations } from '../data/translations.js';
 
     // Navbar scroll hide/show with smooth transition
     const navbar = document.getElementById('navbar');
@@ -74,6 +76,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     // Language Logic - Client-side only, no page reload
     const langEn = document.getElementById('lang-en');
     const langEs = document.getElementById('lang-es');
+    let currentLang = document.documentElement.lang || 'es';
     
     function setLanguage(targetLang) {
         if (targetLang === currentLang) return;
@@ -84,6 +87,9 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
         // Update active classes
         langEn?.classList.toggle('active', targetLang === 'en');
         langEs?.classList.toggle('active', targetLang === 'es');
+        
+        // Update html lang attribute
+        document.documentElement.lang = targetLang;
         
         // Dispatch event for other components to update
         window.dispatchEvent(new CustomEvent('langChange', { detail: { lang: targetLang } }));
@@ -99,7 +105,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
             if (translations[lang] && translations[lang][key]) {
                 // For inputs, update value; for others, update textContent
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    (el as HTMLInputElement).value = translations[lang][key];
+                    el.value = translations[lang][key];
                 } else {
                     el.textContent = translations[lang][key];
                 }
@@ -111,12 +117,10 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     langEs?.addEventListener('click', () => setLanguage('es'));
 
     // Initialize translations on load
-    window.addEventListener('DOMContentLoaded', () => {
-        const savedLang = localStorage.getItem('preferred-lang') || currentLang;
-        if (savedLang !== currentLang) {
-            setLanguage(savedLang);
-        } else {
-            updatePageLanguage(savedLang);
-        }
-    });
+    const savedLang = localStorage.getItem('preferred-lang') || currentLang;
+    if (savedLang !== currentLang) {
+        setLanguage(savedLang);
+    } else {
+        updatePageLanguage(savedLang);
+    }
 </script>
