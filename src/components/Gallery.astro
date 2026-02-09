@@ -57,9 +57,9 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     try {
         const thumb = await getImage({
             src: item.imageMetadata,
-            width: 15, // Reduced from 20 for better performance
+            width: 15,
             format: 'webp',
-            quality: 15 // Reduced from 20
+            quality: 15
         });
         thumbnailSrc = thumb.src;
     } catch (e) {
@@ -103,8 +103,8 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
                             <Image
                                 src={item.imageMetadata}
                                 alt={item.title_en}
-                                width={400}  <!-- Reduced from 600 for thumbnails -->
-                                quality={75}  <!-- Slightly reduced -->
+                                width={400}
+                                quality={75}
                                 format="webp"
                                 loading={index < 4 ? "eager" : "lazy"}
                                 decoding="async"
@@ -118,8 +118,8 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     ))}
 </div>
 
-<script define:vars={{ lightboxMap, initialLang: lang }}>
-    window.galleryData = lightboxMap;
+<script is:inline define:vars={{ lightboxMap: JSON.stringify(lightboxMap), initialLang: lang }}>
+    window.galleryData = JSON.parse(lightboxMap);
     window.initialLang = initialLang;
 </script>
 
