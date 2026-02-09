@@ -42,6 +42,11 @@ const { lang = 'es' } = Astro.props;
             </div>
         </div>
     </div>
+    
+    <!-- Thumbnail Strip -->
+    <div class="lb-thumbnail-strip" id="lb-thumbnail-strip">
+        <div class="thumbnail-container" id="thumbnail-container"></div>
+    </div>
 </div>
 
 <script>
@@ -58,6 +63,7 @@ const { lang = 'es' } = Astro.props;
     const lbStoryText = document.getElementById('lb-story-text');
     const lbContainer = document.getElementById('lb-container');
     const lbWrapper = document.getElementById('lb-wrapper');
+    const thumbnailContainer = document.getElementById('thumbnail-container');
 
     // Preload adjacent images
     function preloadAdjacent(index) {
@@ -74,6 +80,43 @@ const { lang = 'es' } = Astro.props;
                 const img = new Image();
                 img.src = data[i].src;
                 preloadedImages[data[i].id] = img;
+            }
+        });
+    }
+
+    // Build thumbnail strip
+    function buildThumbnailStrip() {
+        if (!thumbnailContainer || !window.galleryData) return;
+        
+        thumbnailContainer.innerHTML = '';
+        window.galleryData.forEach((item, index) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'lb-thumb';
+            thumb.dataset.index = index;
+            
+            const img = document.createElement('img');
+            img.src = item.thumbnailSrc || item.src;
+            img.alt = item.title_en;
+            
+            thumb.appendChild(img);
+            thumb.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentIndex = index;
+                updateContent();
+                resetZoom();
+                preloadAdjacent(currentIndex);
+                updateActiveThumbnail();
+            });
+            
+            thumbnailContainer.appendChild(thumb);
+        });
+    }
+
+    function updateActiveThumbnail() {
+        document.querySelectorAll('.lb-thumb').forEach((thumb, idx) => {
+            thumb.classList.toggle('active', idx === currentIndex);
+            if (idx === currentIndex) {
+                thumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             }
         });
     }
@@ -101,6 +144,8 @@ const { lang = 'es' } = Astro.props;
             updateContent(true);
             resetZoom();
             preloadAdjacent(currentIndex);
+            buildThumbnailStrip();
+            updateActiveThumbnail();
         }
     });
 
@@ -170,6 +215,8 @@ const { lang = 'es' } = Astro.props;
             // Update URL
             const newUrl = `${window.location.pathname}?image=${data.id}`;
             window.history.replaceState({ imageId: data.id }, '', newUrl);
+            
+            updateActiveThumbnail();
         }, isInitialLoad ? 0 : 300);
     }
 
@@ -256,6 +303,7 @@ const { lang = 'es' } = Astro.props;
             );
             const delta = distance / touchStartDistance;
             scale = Math.min(Math.max(1, initialScale * delta), 5);
+            constrainPan();
             updateTransform();
         }
     }, {passive: false});
@@ -285,6 +333,7 @@ const { lang = 'es' } = Astro.props;
 
     // === ZOOM LOGIC (PC + Mobile) ===
     let scale = 1, pointX = 0, pointY = 0, panning = false, startX = 0, startY = 0;
+    let containerWidth = 0, containerHeight = 0, imgWidth = 0, imgHeight = 0;
 
     function resetZoom() {
         scale = 1; pointX = 0; pointY = 0; panning = false;
@@ -294,6 +343,25 @@ const { lang = 'es' } = Astro.props;
     function updateTransform() {
         lbContainer.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
         lbWrapper.style.cursor = scale > 1 ? (panning ? "grabbing" : "grab") : "default";
+    }
+
+    function constrainPan() {
+        // Prevent panning outside image bounds
+        if (scale <= 1) {
+            pointX = 0;
+            pointY = 0;
+            return;
+        }
+
+        const rect = lbWrapper.getBoundingClientRect();
+        const scaledWidth = rect.width * scale;
+        const scaledHeight = rect.height * scale;
+        
+        const maxX = (scaledWidth - rect.width) / 2;
+        const maxY = (scaledHeight - rect.height) / 2;
+        
+        pointX = Math.max(-maxX, Math.min(maxX, pointX));
+        pointY = Math.max(-maxY, Math.min(maxY, pointY));
     }
 
     if(lbWrapper) {
@@ -314,6 +382,7 @@ const { lang = 'es' } = Astro.props;
                 const scaleRatio = scale / oldScale;
                 pointX = x - (x - pointX) * scaleRatio;
                 pointY = y - (y - pointY) * scaleRatio;
+                constrainPan();
             } else {
                 pointX = 0; pointY = 0;
             }
@@ -336,6 +405,7 @@ const { lang = 'es' } = Astro.props;
             e.preventDefault();
             pointX = e.clientX - startX;
             pointY = e.clientY - startY;
+            constrainPan();
             updateTransform();
         });
 
