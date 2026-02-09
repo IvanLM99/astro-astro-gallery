@@ -52,7 +52,7 @@ const { lang = 'es' } = Astro.props;
 <script>
     import { translations } from '../data/translations.js';
 
-    let currentLang = window.initialLang || 'es';
+    let currentLang = window.initialLang || document.documentElement.lang || 'es';
     let currentIndex = 0;
     let preloadedImages = {};
 
@@ -71,8 +71,8 @@ const { lang = 'es' } = Astro.props;
         if (!data) return;
         
         const indicesToLoad = [
-            (index - 1 + data.length) % data.length, // Previous (circular)
-            (index + 1) % data.length // Next (circular)
+            (index - 1 + data.length) % data.length,
+            (index + 1) % data.length
         ];
         
         indicesToLoad.forEach(i => {
@@ -152,7 +152,6 @@ const { lang = 'es' } = Astro.props;
     function openLightbox() {
         lightbox.classList.add('active');
         document.body.classList.add('no-scroll');
-        // Pause particles
         window.dispatchEvent(new CustomEvent('lightboxStateChange', { detail: { open: true } }));
     }
 
@@ -160,7 +159,6 @@ const { lang = 'es' } = Astro.props;
         const data = window.galleryData[currentIndex];
         if(!data) return;
 
-        // Smooth image transition
         lbImg.style.opacity = '0';
         
         setTimeout(() => {
@@ -169,7 +167,6 @@ const { lang = 'es' } = Astro.props;
                 lbImg.classList.add('blur-loading');
             }
 
-            // High Res Loader
             const highResLoader = new Image();
             highResLoader.src = data.src;
             highResLoader.onload = () => {
@@ -185,7 +182,6 @@ const { lang = 'es' } = Astro.props;
                 lbImg.style.opacity = '1';
             }
 
-            // Text Logic
             const title = currentLang === 'en' ? data.title_en : data.title_es;
             const story = currentLang === 'en' ? data.story_en : data.story_es;
             const objName = currentLang === 'en' ? (data.object_en || data.object_es) : data.object_es;
@@ -199,20 +195,17 @@ const { lang = 'es' } = Astro.props;
                 lbStoryContainer.style.display = 'none';
             }
 
-            // Update Specs
             updateSpec('spec-obj', 'val-obj', objName);
             updateSpec('spec-date', 'val-date', data.date);
             updateSpec('spec-exp', 'val-exp', data.exposure);
             updateSpec('spec-equip', 'val-equip', data.equipment);
 
-            // Translate Labels
             const specs = ['lb_obj', 'lb_date', 'lb_exp', 'lb_equip'];
             specs.forEach(key => {
                 const el = document.querySelector(`[data-t="${key}"]`);
                 if(el && translations[currentLang]) el.textContent = translations[currentLang][key];
             });
             
-            // Update URL
             const newUrl = `${window.location.pathname}?image=${data.id}`;
             window.history.replaceState({ imageId: data.id }, '', newUrl);
             
@@ -235,8 +228,6 @@ const { lang = 'es' } = Astro.props;
         const data = window.galleryData;
         const newIndex = currentIndex + dir;
         
-        // Circular navigation: if at end and going forward, go to start
-        // If at start and going back, go to end
         if (newIndex < 0) {
             currentIndex = data.length - 1;
         } else if (newIndex >= data.length) {
@@ -266,13 +257,11 @@ const { lang = 'es' } = Astro.props;
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
         setTimeout(() => { lbImg.src = ''; }, 300);
-        // Remove image param from URL
         window.history.replaceState({}, '', window.location.pathname);
-        // Resume particles
         window.dispatchEvent(new CustomEvent('lightboxStateChange', { detail: { open: false } }));
     }
 
-    // === MOBILE SWIPE GESTURES ===
+    // Mobile Swipe Gestures
     let touchStartX = 0;
     let touchEndX = 0;
     let touchStartY = 0;
@@ -284,7 +273,6 @@ const { lang = 'es' } = Astro.props;
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
         } else if (e.touches.length === 2) {
-            // Pinch zoom start
             touchStartDistance = Math.hypot(
                 e.touches[0].screenX - e.touches[1].screenX,
                 e.touches[0].screenY - e.touches[1].screenY
@@ -295,7 +283,6 @@ const { lang = 'es' } = Astro.props;
 
     lightbox.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2) {
-            // Pinch zoom
             e.preventDefault();
             const distance = Math.hypot(
                 e.touches[0].screenX - e.touches[1].screenX,
@@ -314,7 +301,6 @@ const { lang = 'es' } = Astro.props;
             const diffX = touchStartX - touchEndX;
             const diffY = touchStartY - e.changedTouches[0].screenY;
             
-            // Only swipe if not zoomed and mostly horizontal swipe
             if (scale === 1 && Math.abs(diffX) > Math.abs(diffY)) {
                 handleSwipe();
             }
@@ -324,16 +310,15 @@ const { lang = 'es' } = Astro.props;
     function handleSwipe() {
         const swipeThreshold = 50;
         if (touchEndX < touchStartX - swipeThreshold) {
-            changeImage(1); // Swipe Left -> Next
+            changeImage(1);
         }
         if (touchEndX > touchStartX + swipeThreshold) {
-            changeImage(-1); // Swipe Right -> Prev
+            changeImage(-1);
         }
     }
 
-    // === ZOOM LOGIC (PC + Mobile) ===
+    // Zoom Logic
     let scale = 1, pointX = 0, pointY = 0, panning = false, startX = 0, startY = 0;
-    let containerWidth = 0, containerHeight = 0, imgWidth = 0, imgHeight = 0;
 
     function resetZoom() {
         scale = 1; pointX = 0; pointY = 0; panning = false;
@@ -346,7 +331,6 @@ const { lang = 'es' } = Astro.props;
     }
 
     function constrainPan() {
-        // Prevent panning outside image bounds
         if (scale <= 1) {
             pointX = 0;
             pointY = 0;
@@ -365,7 +349,6 @@ const { lang = 'es' } = Astro.props;
     }
 
     if(lbWrapper) {
-        // Mouse Wheel Zoom (PC) - Zoom towards cursor
         lbWrapper.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = lbWrapper.getBoundingClientRect();
@@ -378,7 +361,6 @@ const { lang = 'es' } = Astro.props;
             scale = Math.min(Math.max(1, scale), 5);
             
             if (scale > 1) {
-                // Zoom towards mouse position
                 const scaleRatio = scale / oldScale;
                 pointX = x - (x - pointX) * scaleRatio;
                 pointY = y - (y - pointY) * scaleRatio;
@@ -389,7 +371,6 @@ const { lang = 'es' } = Astro.props;
             updateTransform();
         }, {passive: false});
 
-        // Pan with mouse
         lbWrapper.addEventListener('mousedown', (e) => {
             if(scale > 1) {
                 e.preventDefault();
@@ -422,7 +403,6 @@ const { lang = 'es' } = Astro.props;
         if (e.key === "ArrowRight") changeImage(1);
     });
     
-    // Check for image ID in URL on load
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const imageId = params.get('image');
