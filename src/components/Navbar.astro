@@ -26,7 +26,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     </div>
 </nav>
 
-<script define:vars={{ currentLang: lang, baseUrl: import.meta.env.BASE_URL }}>
+<script define:vars={{ currentLang: lang }}>
     import { translations } from '../data/translations.js';
 
     // Scroll to top on page load/refresh
@@ -35,11 +35,12 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     }
     window.scrollTo(0, 0);
 
-    // Navbar scroll hide/show
+    // Navbar scroll hide/show with smooth transition
     const navbar = document.getElementById('navbar');
     let lastScrollY = window.scrollY;
+    let ticking = false;
 
-    window.addEventListener('scroll', () => {
+    function updateNavbar() {
         const currentScrollY = window.scrollY;
         if(navbar) {
             if (currentScrollY > lastScrollY && currentScrollY > 100) {
@@ -60,54 +61,62 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
             }
         }
         lastScrollY = currentScrollY;
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(updateNavbar);
+            ticking = true;
+        }
     }, {passive: true});
 
-    // Language Logic
+    // Language Logic - Client-side only, no page reload
     const langEn = document.getElementById('lang-en');
     const langEs = document.getElementById('lang-es');
     
     function setLanguage(targetLang) {
         if (targetLang === currentLang) return;
 
+        currentLang = targetLang;
         localStorage.setItem('preferred-lang', targetLang);
         
-        // 1. Cleanly handle Base URL (remove trailing slash for consistency)
-        // baseUrl comes from astro.config, usually '/astro-astro-gallery/'
-        const cleanBase = baseUrl.replace(/\/$/, '');
+        // Update active classes
+        langEn?.classList.toggle('active', targetLang === 'en');
+        langEs?.classList.toggle('active', targetLang === 'es');
         
-        // 2. Get current path relative to domain
-        let path = window.location.pathname;
+        // Dispatch event for other components to update
+        window.dispatchEvent(new CustomEvent('langChange', { detail: { lang: targetLang } }));
         
-        // 3. Strip the base URL from the start of the path
-        if (path.startsWith(cleanBase)) {
-            path = path.slice(cleanBase.length);
-        }
+        // Update all translatable elements
+        updatePageLanguage(targetLang);
+    }
 
-        // 4. Remove existing language prefix (e.g. '/en/' or '/es/') if present
-        // Matches /en, /en/, /es, /es/ at start of string
-        path = path.replace(/^\/(en|es)(\/|$)/, '/');
-
-        // Ensure path starts with /
-        if (!path.startsWith('/')) path = '/' + path;
-
-        // 5. Build new URL
-        let newUrl = cleanBase;
-
-        if (targetLang === 'en') {
-            newUrl += '/en' + path;
-        } else {
-            // Default lang 'es' usually doesn't need a prefix in Astro default config
-            // unless configured otherwise. Based on your usage, 'es' is root.
-            newUrl += path;
-        }
-
-        // 6. Clean up any double slashes (//) that might have occurred
-        newUrl = newUrl.replace(/\/\//g, '/');
-        
-        // 7. Redirect preserving query parameters
-        window.location.href = newUrl + window.location.search;
+    function updatePageLanguage(lang) {
+        // Update all elements with data-t attribute
+        document.querySelectorAll('[data-t]').forEach(el => {
+            const key = el.getAttribute('data-t');
+            if (translations[lang] && translations[lang][key]) {
+                // For inputs, update value; for others, update textContent
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    (el as HTMLInputElement).value = translations[lang][key];
+                } else {
+                    el.textContent = translations[lang][key];
+                }
+            }
+        });
     }
 
     langEn?.addEventListener('click', () => setLanguage('en'));
     langEs?.addEventListener('click', () => setLanguage('es'));
+
+    // Initialize translations on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem('preferred-lang') || currentLang;
+        if (savedLang !== currentLang) {
+            setLanguage(savedLang);
+        } else {
+            updatePageLanguage(savedLang);
+        }
+    });
 </script>
