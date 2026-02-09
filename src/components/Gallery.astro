@@ -82,7 +82,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
     <div class="filters-wrapper">
         <div class="filters">
-            <button class="filter-btn active" data-filter="all" data-t="filter_all">All</button>
+            <button class="filter-btn active" data-filter="all" data-t="filter_all">Todo</button>
             {categories.map(cat => (
                 <button class="filter-btn" data-filter={cat} data-t={`cat_${cat.toLowerCase()}`}>
                     {cat}
@@ -95,22 +95,24 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 <div id="gallery-root">
     {years.map(year => (
         <div class="year-section" id={`year-${year}`}>
-            <h2 class="year-title">{year}</h2>
-            <div class="gallery-grid">
-                {grouped[year].map((item, index) => (
-                    <div class={`g-item ${item.category}`} data-id={item.id}>
-                        <Image
-                            src={item.imageMetadata}
-                            alt={item.title_en}
-                            width={400}  <!-- Reduced from 600 for thumbnails -->
-                            quality={75}  <!-- Slightly reduced -->
-                            format="webp"
-                            loading={index < 4 ? "eager" : "lazy"}
-                            decoding="async"
-                        />
-                        <div class="overlay"><span data-t="details">DETAILS</span></div>
-                    </div>
-                ))}
+            <h2 class="year-title collapsible" data-year={year}>{year} <span class="toggle-icon">−</span></h2>
+            <div class="year-content" data-year-content={year}>
+                <div class="gallery-grid">
+                    {grouped[year].map((item, index) => (
+                        <div class={`g-item ${item.category}`} data-id={item.id}>
+                            <Image
+                                src={item.imageMetadata}
+                                alt={item.title_en}
+                                width={400}  <!-- Reduced from 600 for thumbnails -->
+                                quality={75}  <!-- Slightly reduced -->
+                                format="webp"
+                                loading={index < 4 ? "eager" : "lazy"}
+                                decoding="async"
+                            />
+                            <div class="overlay"><span data-t="details">DETALLES</span></div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     ))}
@@ -146,7 +148,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         { text_en: "\"Imagination is more important than knowledge. Knowledge is limited. Imagination encircles the world.\"", text_es: "\"La imaginación es más importante que el conocimiento. El conocimiento es limitado. La imaginación rodea al mundo.\"", author: "- Albert Einstein" },
         { text_en: "\"Look deep into nature, and then you will understand everything better.\"", text_es: "\"Mira profundamente en la naturaleza y entonces entenderás todo mejor.\"", author: "- Albert Einstein" },
         { text_en: "\"Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.\"", text_es: "\"Nada en la vida es para ser temido, es sólo para ser comprendido. Ahora es el momento de entender más, para que podamos temer menos.\"", author: "- Marie Curie" },
-        { text_en: "\"I’d rather have questions that can’t be answered than answers that can’t be questioned.\"", text_es: "\"Prefiero tener preguntas que no pueden ser respondidas que respuestas que no pueden ser cuestionadas.\"", author: "- Richard Feynman" },
+        { text_en: "\"I'd rather have questions that can't be answered than answers that can't be questioned.\"", text_es: "\"Prefiero tener preguntas que no pueden ser respondidas que respuestas que no pueden ser cuestionadas.\"", author: "- Richard Feynman" },
         { text_en: "\"Nature uses only the longest threads to weave her patterns, so that each small piece of her fabric reveals the organization of the entire tapestry.\"", text_es: "\"La naturaleza usa solo los hilos más largos para tejer sus patrones, de modo que cada pequeña pieza de su tela revela la organización de todo el tapiz.\"", author: "- Richard Feynman" },
         { text_en: "\"Remember to look up at the stars and not down at your feet. Be curious.\"", text_es: "\"Recuerda mirar hacia arriba a las estrellas y no hacia abajo a tus pies. Sé curioso.\"", author: "- Stephen Hawking" },
         { text_en: "\"The universe does not allow perfection.\"", text_es: "\"El universo no permite la perfección.\"", author: "- Stephen Hawking" },
@@ -167,6 +169,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     
     const quoteTextEl = document.getElementById('quote-text');
     const quoteAuthEl = document.getElementById('quote-author');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
     // Shuffle array using Fisher-Yates
     function shuffleArray(array) {
@@ -189,6 +192,9 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         const q = quoteQueue[currentQuoteIndex];
         const text = currentLang === 'en' ? q.text_en : q.text_es;
         
+        // Longer transition on mobile to prevent overlap
+        const fadeTime = isMobile ? 1500 : 1000;
+        
         // Fade out
         quoteTextEl.classList.remove('visible');
         quoteAuthEl.classList.remove('visible');
@@ -200,7 +206,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             // Fade in
             quoteTextEl.classList.add('visible');
             quoteAuthEl.classList.add('visible');
-        }, 1000); // Longer transition time
+        }, fadeTime);
     }
 
     function nextQuote() {
@@ -255,6 +261,24 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
                 });
                 section.style.display = visibleCount === 0 ? 'none' : 'block';
             });
+        });
+    });
+
+    // Collapsible Year Sections
+    const yearTitles = document.querySelectorAll('.year-title.collapsible');
+    yearTitles.forEach(title => {
+        title.addEventListener('click', () => {
+            const year = title.getAttribute('data-year');
+            const content = document.querySelector(`.year-content[data-year-content="${year}"]`);
+            const icon = title.querySelector('.toggle-icon');
+            
+            if (content) {
+                content.classList.toggle('collapsed');
+                title.classList.toggle('collapsed');
+                if (icon) {
+                    icon.textContent = content.classList.contains('collapsed') ? '+' : '−';
+                }
+            }
         });
     });
 
