@@ -330,3 +330,156 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     .prev-btn { left: 5px; }
     .next-btn { right: 5px; }
 }
+
+/* Collapsible Year Sections */
+.year-title.collapsible {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: color 0.3s ease;
+}
+
+.year-title.collapsible:hover {
+    color: var(--accent);
+}
+
+.toggle-icon {
+    font-size: 1.2rem;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.year-content {
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    max-height: 5000px; /* Arbitrary large number */
+    opacity: 1;
+}
+
+.year-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Smooth Tab Transitions */
+#gallery-tab, #portfolio-tab {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+#gallery-tab.hidden, #portfolio-tab.hidden {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Lightbox Thumbnail Strip */
+.lb-thumbnail-strip {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: rgba(5, 5, 5, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 2003;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+}
+
+.thumbnail-container {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+    align-items: center;
+}
+
+.lb-thumb {
+    height: 60px;
+    width: 60px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+}
+
+.lb-thumb:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+}
+
+.lb-thumb.active {
+    border-color: var(--accent);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.lb-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Adjust lightbox content for thumbnail strip */
+#lightbox.active .lb-content {
+    padding-bottom: 100px; /* Make room for thumbnails */
+}
+
+/* Improved Zoom Container */
+.lb-image-wrapper {
+    cursor: grab;
+}
+
+.lb-image-wrapper:active {
+    cursor: grabbing;
+}
+
+/* Mobile quote slower transition */
+@media(max-width: 768px) {
+    .philosophical-quote, .quote-author {
+        transition: opacity 1.5s ease-in-out !important;
+    }
+    
+    /* Adjust thumbnail strip for mobile */
+    .lb-thumbnail-strip {
+        height: 70px;
+        padding: 8px 10px;
+    }
+    
+    .lb-thumb {
+        height: 50px;
+        width: 50px;
+    }
+    
+    #lightbox.active .lb-content {
+        padding-bottom: 90px;
+    }
+    
+    /* Hide thumbnails on very small screens if needed */
+    @media(max-width: 480px) {
+        .lb-thumbnail-strip {
+            height: 60px;
+        }
+        .lb-thumb {
+            height: 40px;
+            width: 40px;
+        }
+    }
+}
+
+/* Navbar hidden state smoother */
+nav.nav-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+/* Ensure smooth navbar transition */
+nav {
+    will-change: transform, opacity;
+}
