@@ -4,7 +4,8 @@ import Navbar from '../components/Navbar.astro';
 import Gallery from '../components/Gallery.astro';
 import Lightbox from '../components/Lightbox.astro';
 
-const lang = Astro.url.searchParams.get('lang') || localStorage.getItem('preferred-lang') || 'es';
+// Only use URL params on server, localStorage will be handled client-side
+const lang = Astro.url.searchParams.get('lang') || 'es';
 ---
 
 <Layout title="Gallery | Cosmos - Iván López" lang={lang}>
