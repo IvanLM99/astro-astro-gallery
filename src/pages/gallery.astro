@@ -4,14 +4,7 @@ import Navbar from '../components/Navbar.astro';
 import Gallery from '../components/Gallery.astro';
 import Lightbox from '../components/Lightbox.astro';
 
-export function getStaticPaths() {
-  return [
-    { params: { lang: 'es' } },
-    { params: { lang: 'en' } },
-  ];
-}
-
-const { lang = 'es' } = Astro.params;
+const lang = Astro.url.searchParams.get('lang') || localStorage.getItem('preferred-lang') || 'es';
 ---
 
 <Layout title="Gallery | Cosmos - Iván López" lang={lang}>
