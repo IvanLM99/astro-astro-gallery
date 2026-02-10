@@ -126,7 +126,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 <script>
     import { translations } from '../data/translations.js';
 
-    // Quote Logic - Improved Randomization without repetition
+    // Quote Logic - No transition on language change, only on quote rotation
     const quotes = [
         { text_en: "\"We are made of starstuff.\"", text_es: "\"Estamos hechos de polvo de estrellas.\"", author: "- Carl Sagan" },
         { text_en: "\"Somewhere, something incredible is waiting to be known.\"", text_es: "\"En algún lugar, algo increíble espera ser descubierto.\"", author: "- Carl Sagan" },
@@ -166,6 +166,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     let currentLang = window.initialLang || 'es';
     let quoteQueue = [];
     let currentQuoteIndex = 0;
+    let isLangChange = false;
     
     const quoteTextEl = document.getElementById('quote-text');
     const quoteAuthEl = document.getElementById('quote-author');
@@ -187,26 +188,39 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         currentQuoteIndex = 0;
     }
 
-    function updateQuoteDisplay() {
+    function updateQuoteDisplay(skipTransition = false) {
         if(!quoteTextEl || !quoteAuthEl) return;
         const q = quoteQueue[currentQuoteIndex];
         const text = currentLang === 'en' ? q.text_en : q.text_es;
         
-        // Longer transition on mobile to prevent overlap
-        const fadeTime = isMobile ? 1500 : 1000;
-        
-        // Fade out
-        quoteTextEl.classList.remove('visible');
-        quoteAuthEl.classList.remove('visible');
-        
-        setTimeout(() => {
+        if (skipTransition) {
+            // Instant update for language change - no transition
+            quoteTextEl.style.transition = 'none';
+            quoteAuthEl.style.transition = 'none';
             quoteTextEl.textContent = text;
             quoteAuthEl.textContent = q.author;
-            
-            // Fade in
             quoteTextEl.classList.add('visible');
             quoteAuthEl.classList.add('visible');
-        }, fadeTime);
+            
+            // Restore transitions after a brief delay
+            setTimeout(() => {
+                quoteTextEl.style.transition = '';
+                quoteAuthEl.style.transition = '';
+            }, 50);
+        } else {
+            // Normal fade transition for quote rotation
+            const fadeTime = isMobile ? 800 : 500;
+            
+            quoteTextEl.classList.remove('visible');
+            quoteAuthEl.classList.remove('visible');
+            
+            setTimeout(() => {
+                quoteTextEl.textContent = text;
+                quoteAuthEl.textContent = q.author;
+                quoteTextEl.classList.add('visible');
+                quoteAuthEl.classList.add('visible');
+            }, fadeTime);
+        }
     }
 
     function nextQuote() {
@@ -230,10 +244,12 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     // Change quote every 10 seconds (slower for better readability)
     setInterval(nextQuote, 10000);
 
-    // Lang Change Listener
+    // Lang Change Listener - Instant update, no transition
     window.addEventListener('langChange', (e) => {
         currentLang = e.detail.lang;
-        updateQuoteDisplay();
+        isLangChange = true;
+        updateQuoteDisplay(true); // true = skip transition
+        isLangChange = false;
     });
 
     // Filtering Logic
@@ -282,7 +298,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         });
     });
 
-    // Gallery Item Click
+    // Gallery Item Click - Updated for root URL
     const items = document.querySelectorAll('.g-item');
     items.forEach(item => {
         item.addEventListener('click', (e) => {
@@ -290,8 +306,8 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             const thumbImg = item.querySelector('img');
             const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
 
-            // Update URL without reloading
-            const newUrl = `${window.location.pathname}?image=${id}`;
+            // Update URL without reloading - use root path
+            const newUrl = `?image=${id}`;
             window.history.pushState({ imageId: id }, '', newUrl);
 
             window.dispatchEvent(new CustomEvent('openLightbox', {
