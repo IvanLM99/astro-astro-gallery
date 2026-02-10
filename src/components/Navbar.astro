@@ -3,8 +3,9 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 
 const { activeTab = 'gallery', lang = 'es' } = Astro.props;
 
+// Use root URL for gallery, /universe for portfolio
 const homeUrl = getRelativeLocaleUrl(lang, '');
-const galleryUrl = getRelativeLocaleUrl(lang, 'gallery');
+const galleryUrl = getRelativeLocaleUrl(lang, '');
 const universeUrl = getRelativeLocaleUrl(lang, 'universe');
 ---
 
@@ -96,6 +97,11 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
         
         // Update all translatable elements
         updatePageLanguage(targetLang);
+        
+        // Update URL parameter without reloading
+        const url = new URL(window.location);
+        url.searchParams.set('lang', targetLang);
+        window.history.replaceState({}, '', url);
     }
 
     function updatePageLanguage(lang) {
@@ -117,7 +123,10 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     langEs?.addEventListener('click', () => setLanguage('es'));
 
     // Initialize translations on load
-    const savedLang = localStorage.getItem('preferred-lang') || currentLang;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLang = urlParams.get('lang');
+    const savedLang = urlLang || localStorage.getItem('preferred-lang') || currentLang;
+    
     if (savedLang !== currentLang) {
         setLanguage(savedLang);
     } else {
