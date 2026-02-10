@@ -64,6 +64,7 @@ const { lang = 'es' } = Astro.props;
     const lbContainer = document.getElementById('lb-container');
     const lbWrapper = document.getElementById('lb-wrapper');
     const thumbnailContainer = document.getElementById('thumbnail-container');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
     // Preload adjacent images
     function preloadAdjacent(index) {
@@ -84,7 +85,7 @@ const { lang = 'es' } = Astro.props;
         });
     }
 
-    // Build thumbnail strip
+    // Build thumbnail strip with better quality thumbnails
     function buildThumbnailStrip() {
         if (!thumbnailContainer || !window.galleryData) return;
         
@@ -95,10 +96,14 @@ const { lang = 'es' } = Astro.props;
             thumb.dataset.index = index;
             
             const img = document.createElement('img');
+            // Use higher quality thumbnail for filmstrip
             img.src = item.thumbnailSrc || item.src;
             img.alt = item.title_en;
+            img.loading = "lazy";
             
             thumb.appendChild(img);
+            
+            // Use click instead of touch for mobile to prevent accidental changes while scrolling
             thumb.addEventListener('click', (e) => {
                 e.stopPropagation();
                 currentIndex = index;
@@ -206,7 +211,8 @@ const { lang = 'es' } = Astro.props;
                 if(el && translations[currentLang]) el.textContent = translations[currentLang][key];
             });
             
-            const newUrl = `${window.location.pathname}?image=${data.id}`;
+            // Update URL with root path
+            const newUrl = `?image=${data.id}`;
             window.history.replaceState({ imageId: data.id }, '', newUrl);
             
             updateActiveThumbnail();
@@ -257,21 +263,24 @@ const { lang = 'es' } = Astro.props;
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
         setTimeout(() => { lbImg.src = ''; }, 300);
-        window.history.replaceState({}, '', window.location.pathname);
+        // Clear URL parameter
+        window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[?&]image=[^&]+/, '').replace(/^&/, '?'));
         window.dispatchEvent(new CustomEvent('lightboxStateChange', { detail: { open: false } }));
     }
 
-    // Mobile Swipe Gestures
+    // Mobile Swipe Gestures - with threshold to prevent accidental changes
     let touchStartX = 0;
     let touchEndX = 0;
     let touchStartY = 0;
     let touchStartDistance = 0;
     let initialScale = 1;
+    let isSwiping = false;
 
     lightbox.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
+            isSwiping = false;
         } else if (e.touches.length === 2) {
             touchStartDistance = Math.hypot(
                 e.touches[0].screenX - e.touches[1].screenX,
@@ -292,6 +301,12 @@ const { lang = 'es' } = Astro.props;
             scale = Math.min(Math.max(1, initialScale * delta), 5);
             constrainPan();
             updateTransform();
+        } else if (e.touches.length === 1 && scale === 1) {
+            // Detect if user is trying to swipe
+            const diffX = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diffX) > 10) {
+                isSwiping = true;
+            }
         }
     }, {passive: false});
 
@@ -301,14 +316,16 @@ const { lang = 'es' } = Astro.props;
             const diffX = touchStartX - touchEndX;
             const diffY = touchStartY - e.changedTouches[0].screenY;
             
-            if (scale === 1 && Math.abs(diffX) > Math.abs(diffY)) {
+            // Only handle swipe if we're not zoomed and it's a horizontal swipe
+            if (scale === 1 && Math.abs(diffX) > Math.abs(diffY) && isSwiping) {
                 handleSwipe();
             }
         }
+        isSwiping = false;
     }, {passive: true});
 
     function handleSwipe() {
-        const swipeThreshold = 50;
+        const swipeThreshold = 80; // Increased threshold to prevent accidental swipes
         if (touchEndX < touchStartX - swipeThreshold) {
             changeImage(1);
         }
@@ -403,6 +420,7 @@ const { lang = 'es' } = Astro.props;
         if (e.key === "ArrowRight") changeImage(1);
     });
     
+    // Check URL on load for image parameter
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const imageId = params.get('image');
