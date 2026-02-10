@@ -104,14 +104,20 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
 .quote-container { 
     min-height: 140px; margin-bottom: 30px; 
     display: flex; flex-direction: column; justify-content: center; position: relative;
+    overflow: hidden; /* Prevent overlap */
 }
 .philosophical-quote {
     font-family: var(--font-serif); font-size: 2.2rem; font-style: italic;
-    color: var(--accent); margin-bottom: 15px; opacity: 0; transition: opacity 1s ease;
+    color: var(--accent); margin-bottom: 15px; opacity: 0; 
+    transition: opacity 1s ease;
+    position: relative; /* For proper stacking */
+    z-index: 2;
 }
 .quote-author {
     font-family: var(--font-sans); font-size: 0.85rem; color: var(--text-muted);
     opacity: 0; transition: opacity 1s ease;
+    position: relative;
+    z-index: 1;
 }
 .visible { opacity: 1 !important; }
 
@@ -317,9 +323,39 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     /* CV & Misc */
     .cv-grid { grid-template-columns: 1fr; gap: 40px; }
     .equipment-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
-    .quote-container { min-height: 200px; }
-    .philosophical-quote { font-size: 1.6rem; transition: opacity 1.5s ease-in-out; }
-    .quote-author { transition: opacity 1.5s ease-in-out; }
+    
+    /* Mobile Quote Fixes - Prevent overlap */
+    .quote-container { 
+        min-height: 180px; /* Increased height */
+        position: relative;
+    }
+    .philosophical-quote { 
+        font-size: 1.6rem; 
+        transition: opacity 0.8s ease-in-out;
+        position: absolute;
+        width: 100%;
+        left: 0;
+        top: 50%;
+        transform: translateY(-70%);
+        margin: 0;
+        padding: 0 10px;
+    }
+    .quote-author { 
+        font-size: 0.8rem; 
+        transition: opacity 0.8s ease-in-out;
+        position: absolute;
+        width: 100%;
+        left: 0;
+        top: 50%;
+        transform: translateY(20px);
+        margin: 0;
+    }
+    /* Ensure quotes don't overlap by fading completely */
+    .philosophical-quote:not(.visible),
+    .quote-author:not(.visible) {
+        opacity: 0 !important;
+        pointer-events: none;
+    }
     
     /* Lightbox Mobile */
     .lb-content img, #lb-img { max-height: 50vh; }
@@ -388,6 +424,9 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     padding: 10px 20px;
     display: flex;
     align-items: center;
+    /* Prevent accidental image changes while scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 .thumbnail-container {
@@ -395,6 +434,7 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     gap: 10px;
     height: 100%;
     align-items: center;
+    padding: 0 10px;
 }
 
 .lb-thumb {
@@ -407,6 +447,9 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     overflow: hidden;
     transition: all 0.3s ease;
     opacity: 0.6;
+    /* Better image quality */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .lb-thumb:hover {
@@ -424,6 +467,8 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Improve thumbnail quality */
+    filter: contrast(1.1) brightness(1.05);
 }
 
 /* Adjust lightbox content for thumbnail strip */
@@ -443,43 +488,8 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
 /* Mobile quote slower transition */
 @media(max-width: 768px) {
     .philosophical-quote, .quote-author {
-        transition: opacity 1.5s ease-in-out !important;
+        transition: opacity 0.8s ease-in-out !important;
     }
     
     /* Adjust thumbnail strip for mobile */
-    .lb-thumbnail-strip {
-        height: 70px;
-        padding: 8px 10px;
-    }
-    
-    .lb-thumb {
-        height: 50px;
-        width: 50px;
-    }
-    
-    #lightbox.active .lb-content {
-        padding-bottom: 90px;
-    }
-    
-    /* Hide thumbnails on very small screens if needed */
-    @media(max-width: 480px) {
-        .lb-thumbnail-strip {
-            height: 60px;
-        }
-        .lb-thumb {
-            height: 40px;
-            width: 40px;
-        }
-    }
-}
-
-/* Navbar hidden state smoother */
-nav.nav-hidden {
-    transform: translateY(-100%);
-    opacity: 0;
-}
-
-/* Ensure smooth navbar transition */
-nav {
-    will-change: transform, opacity;
-}
+    .lb-thumbnail
