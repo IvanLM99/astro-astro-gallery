@@ -3,14 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Portfolio from '../components/Portfolio.astro';
 
-export function getStaticPaths() {
-  return [
-    { params: { lang: 'es' } },
-    { params: { lang: 'en' } },
-  ];
-}
-
-const { lang = 'es' } = Astro.params;
+const lang = Astro.url.searchParams.get('lang') || 'es';
 ---
 
 <Layout title="My Universe | Cosmos - Iván López" lang={lang}>
