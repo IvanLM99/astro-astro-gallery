@@ -50,6 +50,7 @@
                 this.vy = (Math.random() - 0.5) * 0.2;
                 this.size = Math.random() * 1.5;
                 this.angle = Math.random() * Math.PI * 2;
+                this.baseAlpha = Math.random() * 0.5 + 0.2;
             }
             update() {
                 if (isPaused) return;
@@ -79,7 +80,9 @@
             }
             draw() {
                 if(!ctx) return;
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+                // Consistent alpha calculation
+                const alpha = this.baseAlpha + (Math.sin(Date.now() * 0.001 + this.x) * 0.1);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, alpha)})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
