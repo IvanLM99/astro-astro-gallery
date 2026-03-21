@@ -1,6 +1,10 @@
 <canvas id="bg-canvas"></canvas>
 
 <script>
+     // Prevent multiple initializations
+    if (window.particlesInitialized) return;
+    window.particlesInitialized = true;
+
     const canvas = document.getElementById('bg-canvas');
     if(canvas && canvas instanceof HTMLCanvasElement) {
         const ctx = canvas.getContext('2d');
