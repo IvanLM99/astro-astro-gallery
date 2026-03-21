@@ -108,5 +108,20 @@ const socialImageURL = new URL('/astro-astro-gallery/assets/EclipseUs.jpg', Astr
                 });
             }
         </script>
+
+		<script>
+		    // Ensure particles don't reinitialize on navigation (if using View Transitions)
+		    // or when tabs switch
+		    window.addEventListener('load', () => {
+		        // Particles are canvas-based and should persist in Layout
+		        // This ensures no duplicate canvas elements
+		        const canvases = document.querySelectorAll('#bg-canvas');
+		        if (canvases.length > 1) {
+		            for (let i = 1; i < canvases.length; i++) {
+		                canvases[i].remove();
+		            }
+		        }
+		    });
+		</script>
 	</body>
 </html>
