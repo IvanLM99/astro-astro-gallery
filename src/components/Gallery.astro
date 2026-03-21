@@ -51,19 +51,20 @@ const grouped = validItems.reduce((acc, item) => {
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 const categories = [...new Set(validItems.map(i => i.category))].sort();
 
-// 4. Create Client-Side Map with Smaller Thumbnails
+// 4. Create Client-Side Map with HIGH QUALITY Thumbnails
 const lightboxMap = await Promise.all(validItems.map(async (item) => {
     let thumbnailSrc = '';
     try {
         const thumb = await getImage({
             src: item.imageMetadata,
-            width: 15,
+            width: 30,        // INCREASED from 15
             format: 'webp',
-            quality: 15
+            quality: 50        // INCREASED from 15
         });
         thumbnailSrc = thumb.src;
     } catch (e) {
         console.error("Failed to generate thumbnail for", item.src);
+        thumbnailSrc = item.imageMetadata.src; // Fallback to full image
     }
 
     return {
