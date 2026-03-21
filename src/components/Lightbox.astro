@@ -71,7 +71,7 @@ const { lang = 'es' } = Astro.props;
         const data = window.galleryData;
         if (!data) return;
         
-        const indicesToLoad = [
+        const indicesToLoad =[
             (index - 1 + data.length) % data.length,
             (index + 1) % data.length
         ];
@@ -134,7 +134,7 @@ const { lang = 'es' } = Astro.props;
     window.addEventListener('openLightbox', (e) => {
         const id = e.detail.id;
         const thumbSrc = e.detail.thumbSrc;
-        const data = window.galleryData || [];
+        const data = window.galleryData ||[];
 
         currentIndex = data.findIndex(i => i.id === id);
 
@@ -205,7 +205,7 @@ const { lang = 'es' } = Astro.props;
             updateSpec('spec-exp', 'val-exp', data.exposure);
             updateSpec('spec-equip', 'val-equip', data.equipment);
 
-            const specs = ['lb_obj', 'lb_date', 'lb_exp', 'lb_equip'];
+            const specs =['lb_obj', 'lb_date', 'lb_exp', 'lb_equip'];
             specs.forEach(key => {
                 const el = document.querySelector(`[data-t="${key}"]`);
                 if(el && translations[currentLang]) el.textContent = translations[currentLang][key];
@@ -268,7 +268,7 @@ const { lang = 'es' } = Astro.props;
         window.dispatchEvent(new CustomEvent('lightboxStateChange', { detail: { open: false } }));
     }
 
-    // Mobile Swipe Gestures - with threshold to prevent accidental changes
+    // Mobile Swipe Gestures - applied to image wrapper for cleaner interaction
     let touchStartX = 0;
     let touchEndX = 0;
     let touchStartY = 0;
@@ -276,62 +276,67 @@ const { lang = 'es' } = Astro.props;
     let initialScale = 1;
     let isSwiping = false;
 
-    lightbox.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
+    if (lbWrapper) {
+        lbWrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                isSwiping = false;
+            } else if (e.touches.length === 2) {
+                touchStartDistance = Math.hypot(
+                    e.touches[0].screenX - e.touches[1].screenX,
+                    e.touches[0].screenY - e.touches[1].screenY
+                );
+                initialScale = scale;
+            }
+        }, {passive: true});
+
+        lbWrapper.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const distance = Math.hypot(
+                    e.touches[0].screenX - e.touches[1].screenX,
+                    e.touches[0].screenY - e.touches[1].screenY
+                );
+                const delta = distance / touchStartDistance;
+                scale = Math.min(Math.max(1, initialScale * delta), 5);
+                constrainPan();
+                updateTransform();
+            } else if (e.touches.length === 1 && scale === 1) {
+                const diffX = touchStartX - e.changedTouches[0].screenX;
+                const diffY = touchStartY - e.changedTouches[0].screenY;
+                // Allow both vertical and horizontal swipes on the image
+                if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                    isSwiping = true;
+                    e.preventDefault(); // Prevent page scroll when swiping on the image itself
+                }
+            } else if (e.touches.length === 1 && scale > 1) {
+                e.preventDefault(); // Prevent scroll while panning zoomed image on touch
+            }
+        }, {passive: false});
+
+        lbWrapper.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length === 1) {
+                touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const diffX = touchStartX - touchEndX;
+                const diffY = touchStartY - touchEndY;
+                
+                if (scale === 1 && isSwiping) {
+                    const swipeThreshold = 50;
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        // Horizontal swipe
+                        if (diffX > swipeThreshold) changeImage(1);
+                        else if (diffX < -swipeThreshold) changeImage(-1);
+                    } else {
+                        // Vertical swipe (up/down)
+                        if (diffY > swipeThreshold) changeImage(1); // Swipe up -> Next
+                        else if (diffY < -swipeThreshold) changeImage(-1); // Swipe down -> Prev
+                    }
+                }
+            }
             isSwiping = false;
-        } else if (e.touches.length === 2) {
-            touchStartDistance = Math.hypot(
-                e.touches[0].screenX - e.touches[1].screenX,
-                e.touches[0].screenY - e.touches[1].screenY
-            );
-            initialScale = scale;
-        }
-    }, {passive: true});
-
-    lightbox.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const distance = Math.hypot(
-                e.touches[0].screenX - e.touches[1].screenX,
-                e.touches[0].screenY - e.touches[1].screenY
-            );
-            const delta = distance / touchStartDistance;
-            scale = Math.min(Math.max(1, initialScale * delta), 5);
-            constrainPan();
-            updateTransform();
-        } else if (e.touches.length === 1 && scale === 1) {
-            // Detect if user is trying to swipe
-            const diffX = touchStartX - e.changedTouches[0].screenX;
-            if (Math.abs(diffX) > 10) {
-                isSwiping = true;
-            }
-        }
-    }, {passive: false});
-
-    lightbox.addEventListener('touchend', (e) => {
-        if (e.changedTouches.length === 1) {
-            touchEndX = e.changedTouches[0].screenX;
-            const diffX = touchStartX - touchEndX;
-            const diffY = touchStartY - e.changedTouches[0].screenY;
-            
-            // Only handle swipe if we're not zoomed and it's a horizontal swipe
-            if (scale === 1 && Math.abs(diffX) > Math.abs(diffY) && isSwiping) {
-                handleSwipe();
-            }
-        }
-        isSwiping = false;
-    }, {passive: true});
-
-    function handleSwipe() {
-        const swipeThreshold = 80; // Increased threshold to prevent accidental swipes
-        if (touchEndX < touchStartX - swipeThreshold) {
-            changeImage(1);
-        }
-        if (touchEndX > touchStartX + swipeThreshold) {
-            changeImage(-1);
-        }
+        }, {passive: true});
     }
 
     // Zoom Logic
