@@ -298,19 +298,21 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             }
         });
     });
-
-    // Gallery Item Click - Updated for root URL
+    
+    // Gallery Item Click - Preserve existing URL params
     const items = document.querySelectorAll('.g-item');
     items.forEach(item => {
         item.addEventListener('click', (e) => {
             const id = item.getAttribute('data-id');
+            
+            // Update URL preserving lang param
+            const url = new URL(window.location.href);
+            url.searchParams.set('image', id);
+            window.history.pushState({ imageId: id }, '', url);
+    
             const thumbImg = item.querySelector('img');
             const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
-
-            // Update URL without reloading - use root path
-            const newUrl = `?image=${id}`;
-            window.history.pushState({ imageId: id }, '', newUrl);
-
+    
             window.dispatchEvent(new CustomEvent('openLightbox', {
                 detail: { id, thumbSrc }
             }));
