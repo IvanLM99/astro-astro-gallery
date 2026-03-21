@@ -38,7 +38,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
 <script>
     import { translations } from '../data/translations.js';
 
-    // Navbar scroll hide/show with smooth transition
+    // Navbar scroll behavior
     const navbar = document.getElementById('navbar');
     let lastScrollY = window.scrollY;
     let ticking = false;
@@ -74,7 +74,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
         }
     }, {passive: true});
 
-    // Language Logic - Client-side only, no page reload
+    // Language Logic - Fixed for SEO-friendly URLs
     const langEn = document.getElementById('lang-en');
     const langEs = document.getElementById('lang-es');
     let currentLang = document.documentElement.lang || 'es';
@@ -92,24 +92,26 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
         // Update html lang attribute
         document.documentElement.lang = targetLang;
         
-        // Dispatch event for other components to update
+        // Update URL - Only add param for English
+        const url = new URL(window.location.href);
+        if (targetLang === 'en') {
+            url.searchParams.set('lang', 'en');
+        } else {
+            url.searchParams.delete('lang');
+        }
+        window.history.replaceState({}, '', url);
+        
+        // Dispatch event for other components
         window.dispatchEvent(new CustomEvent('langChange', { detail: { lang: targetLang } }));
         
         // Update all translatable elements
         updatePageLanguage(targetLang);
-        
-        // Update URL parameter without reloading
-        const url = new URL(window.location);
-        url.searchParams.set('lang', targetLang);
-        window.history.replaceState({}, '', url);
     }
 
     function updatePageLanguage(lang) {
-        // Update all elements with data-t attribute
         document.querySelectorAll('[data-t]').forEach(el => {
             const key = el.getAttribute('data-t');
             if (translations[lang] && translations[lang][key]) {
-                // For inputs, update value; for others, update textContent
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     el.value = translations[lang][key];
                 } else {
@@ -122,14 +124,29 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
     langEn?.addEventListener('click', () => setLanguage('en'));
     langEs?.addEventListener('click', () => setLanguage('es'));
 
-    // Initialize translations on load
+    // Initialize - Check URL param first, then localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const urlLang = urlParams.get('lang');
-    const savedLang = urlLang || localStorage.getItem('preferred-lang') || currentLang;
+    const savedLang = localStorage.getItem('preferred-lang');
     
-    if (savedLang !== currentLang) {
-        setLanguage(savedLang);
+    // Determine initial language
+    let initialLang = 'es'; // Default
+    if (urlLang === 'en' || urlLang === 'es') {
+        initialLang = urlLang;
+    } else if (savedLang === 'en' || savedLang === 'es') {
+        initialLang = savedLang;
+    }
+    
+    // Apply if different from current
+    if (initialLang !== currentLang || urlLang) {
+        setLanguage(initialLang);
     } else {
-        updatePageLanguage(savedLang);
+        updatePageLanguage(initialLang);
+        // Ensure clean URL (no ?lang=es)
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('lang') === 'es') {
+            url.searchParams.delete('lang');
+            window.history.replaceState({}, '', url);
+        }
     }
 </script>
