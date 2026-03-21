@@ -1,13 +1,18 @@
 <canvas id="bg-canvas"></canvas>
 
 <script>
-     // Prevent multiple initializations
-    if (window.particlesInitialized) return;
-    window.particlesInitialized = true;
+    // Wrap in IIFE to allow early return and prevent scope pollution
+    (function() {
+        // Prevent multiple initializations
+        if (window.particlesInitialized) return;
+        window.particlesInitialized = true;
 
-    const canvas = document.getElementById('bg-canvas');
-    if(canvas && canvas instanceof HTMLCanvasElement) {
+        const canvas = document.getElementById('bg-canvas');
+        if (!canvas || !(canvas instanceof HTMLCanvasElement)) return;
+        
         const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
         let width, height;
         let particles = [];
         let shootingStar = null;
@@ -15,7 +20,7 @@
         let isPaused = false;
 
         const isMobile = window.innerWidth <= 768;
-        const particleCount = isMobile ? 30 : 175; // Reduced for performance
+        const particleCount = isMobile ? 30 : 175;
 
         let mouse = { x: -1000, y: -1000 };
         let mouseActive = false;
@@ -25,6 +30,7 @@
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         };
+        
         window.addEventListener('resize', resize);
         resize();
 
@@ -56,6 +62,7 @@
                 this.angle = Math.random() * Math.PI * 2;
                 this.baseAlpha = Math.random() * 0.5 + 0.2;
             }
+            
             update() {
                 if (isPaused) return;
                 
@@ -79,12 +86,14 @@
                 this.x += this.vx;
                 this.y += this.vy;
 
-                if (this.x < 0) this.x = width; if (this.x > width) this.x = 0;
-                if (this.y < 0) this.y = height; if (this.y > height) this.y = 0;
+                if (this.x < 0) this.x = width; 
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height; 
+                if (this.y > height) this.y = 0;
             }
+            
             draw() {
-                if(!ctx) return;
-                // Consistent alpha calculation
+                if (!ctx) return;
                 const alpha = this.baseAlpha + (Math.sin(Date.now() * 0.001 + this.x) * 0.1);
                 ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, alpha)})`;
                 ctx.beginPath();
@@ -97,6 +106,7 @@
             constructor() {
                 this.reset();
             }
+            
             reset() {
                 this.x = Math.random() * width;
                 this.y = 0;
@@ -106,6 +116,7 @@
                 this.waitTime = new Date().getTime() + Math.random() * 3000 + 3000;
                 this.active = false;
             }
+            
             update() {
                 if (isPaused) return;
                 
@@ -124,6 +135,7 @@
                     }
                 }
             }
+            
             draw() {
                 if (this.active && ctx) {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
@@ -140,7 +152,7 @@
         shootingStar = new ShootingStar();
 
         const animate = () => {
-            if(!ctx) return;
+            if (!ctx) return;
             
             if (!isPaused) {
                 ctx.clearRect(0, 0, width, height);
@@ -155,5 +167,5 @@
         };
         
         animate();
-    }
+    })();
 </script>
