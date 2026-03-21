@@ -2,24 +2,18 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Gallery from '../components/Gallery.astro';
-import Portfolio from '../components/Portfolio.astro';
 import Lightbox from '../components/Lightbox.astro';
+
+const lang = Astro.url.searchParams.get('lang') || 'es';
+const title = lang === 'en' ? 'Gallery | Cosmos - Iván López' : 'Galería | Cosmos - Iván López';
 ---
 
-<Layout title="Cosmos | Iván López">
-    <Navbar />
+<Layout title={title} lang={lang}>
+  <Navbar activeTab="gallery" lang={lang} />
+  
+  <main class="content-container">
+    <Gallery lang={lang} />
+  </main>
 
-    <main class="content-container">
-        <!-- GALLERY TAB -->
-        <section id="gallery-tab" class="fade-in">
-            <Gallery />
-        </section>
-
-        <!-- PORTFOLIO TAB (Hidden by default) -->
-        <section id="portfolio-tab" class="hidden">
-            <Portfolio />
-        </section>
-    </main>
-
-    <Lightbox />
+  <Lightbox lang={lang} />
 </Layout>
