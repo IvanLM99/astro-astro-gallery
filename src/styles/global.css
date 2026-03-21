@@ -320,28 +320,28 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     .equipment-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
     
     .quote-container { 
-        min-height: 180px;
-        position: relative;
+        min-height: auto;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     .philosophical-quote { 
-        font-size: 1.6rem; 
+        font-size: 1.4rem; 
         transition: opacity 0.8s ease-in-out;
-        position: absolute;
+        position: static;
         width: 100%;
-        left: 0;
-        top: 50%;
-        transform: translateY(-70%);
-        margin: 0;
-        padding: 0 10px;
+        transform: none;
+        margin: 0 0 15px 0;
+        padding: 0;
     }
     .quote-author { 
-        font-size: 0.8rem; 
+        font-size: 0.9rem; 
         transition: opacity 0.8s ease-in-out;
-        position: absolute;
+        position: static;
         width: 100%;
-        left: 0;
-        top: 50%;
-        transform: translateY(20px);
+        transform: none;
         margin: 0;
     }
     .philosophical-quote:not(.visible),
@@ -351,12 +351,11 @@ nav.nav-faded { opacity: 0.95; background: rgba(3, 3, 3, 0.95); padding: 15px 40
     }
     
     .lb-content img, #lb-img { max-height: 50vh; }
-    .lb-image-wrapper { touch-action: pan-y pinch-zoom; }
+    .lb-image-wrapper { touch-action: none; } /* Prevents unwanted browser behaviors during vertical swipe */
     .tech-specs { gap: 20px; flex-direction: column; }
     .lb-story { font-size: 1rem; }
-    .lb-nav-btn { font-size: 2rem; padding: 10px; }
-    .prev-btn { left: 5px; }
-    .next-btn { right: 5px; }
+    .lb-nav-btn { display: none !important; } /* Hide ugly arrows on mobile */
+    .close-lb { top: 15px; right: 20px; font-size: 2.2rem; }
 }
 
 /* Collapsible Year Sections */
