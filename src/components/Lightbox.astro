@@ -70,9 +70,6 @@ const { lang = 'es' } = Astro.props;
                                  loading="${Math.abs(index - startIndex) <= 1 ? 'eager' : 'lazy'}">
                             <div class="lb-loading-skeleton"></div>
                         </div>
-                        <button class="lb-zoom-btn" aria-label="Zoom image">
-                            <i class="fas fa-expand"></i>
-                        </button>
                     </div>
                     
                     <div class="lb-info-section">
@@ -119,8 +116,10 @@ const { lang = 'es' } = Astro.props;
             const fullImg = new Image();
             fullImg.src = item.src;
             fullImg.onload = () => {
-                img.src = item.src;
-                img.classList.add('loaded');
+                if (img) {
+                    img.src = item.src;
+                    img.classList.add('loaded');
+                }
                 if (skeleton) skeleton.style.display = 'none';
             };
             
@@ -158,16 +157,12 @@ const { lang = 'es' } = Astro.props;
             progressFill.style.width = `${progress}%`;
         }
         
-        // Update URL without reloading
+        // Update URL preserving all params including lang
         const item = window.galleryData[index];
         if (item) {
-            const params = new URLSearchParams(window.location.search);
-            params.set('image', item.id);
-            // Preserve lang param if exists
-            const langParam = params.get('lang');
-            let newUrl = `?image=${item.id}`;
-            if (langParam) newUrl += `&lang=${langParam}`;
-            window.history.replaceState({ imageId: item.id }, '', newUrl);
+            const url = new URL(window.location.href);
+            url.searchParams.set('image', item.id);
+            window.history.replaceState({ imageId: item.id }, '', url);
         }
         
         // Preload next/prev
@@ -225,21 +220,18 @@ const { lang = 'es' } = Astro.props;
     function openLightbox() {
         lightbox.classList.add('active');
         document.body.classList.add('no-scroll');
-        document.body.style.overflow = 'hidden'; // Double lock for iOS
+        document.body.style.overflow = 'hidden';
     }
     
     function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
-        document.body.style.overflow = ''; // Release lock
+        document.body.style.overflow = '';
         
-        // Clear image param but keep lang
-        const params = new URLSearchParams(window.location.search);
-        params.delete('image');
-        const lang = params.get('lang');
-        let newUrl = window.location.pathname;
-        if (lang) newUrl += `?lang=${lang}`;
-        window.history.replaceState({}, '', newUrl);
+        // Clear image param but keep lang and other params
+        const url = new URL(window.location.href);
+        url.searchParams.delete('image');
+        window.history.replaceState({}, '', url);
     }
     
     // Navigation buttons
@@ -279,39 +271,36 @@ const { lang = 'es' } = Astro.props;
     
     // Touch/swipe handling
     let touchStartY = 0;
-    let touchEndY = 0;
     
     lbFeed?.addEventListener('touchstart', (e) => {
         touchStartY = e.changedTouches[0].screenY;
     }, {passive: true});
     
     lbFeed?.addEventListener('touchend', (e) => {
-        touchEndY = e.changedTouches[0].screenY;
-        handleSwipe();
-    }, {passive: true});
-    
-    function handleSwipe() {
-        const threshold = 50;
+        const touchEndY = e.changedTouches[0].screenY;
         const diff = touchStartY - touchEndY;
+        const threshold = 50;
         
         if (Math.abs(diff) > threshold) {
             if (diff > 0) {
-                scrollToIndex(currentIndex + 1); // Swipe up = next
+                scrollToIndex(currentIndex + 1);
             } else {
-                scrollToIndex(currentIndex - 1); // Swipe down = prev
+                scrollToIndex(currentIndex - 1);
             }
         }
-    }
+    }, {passive: true});
     
-    // Language change
+    // Language change - rebuild feed with new language
     window.addEventListener('langChange', (e) => {
         currentLang = e.detail.lang;
         if (lightbox.classList.contains('active')) {
-            buildFeed(currentIndex);
+            const savedIndex = currentIndex;
+            buildFeed(savedIndex);
             setTimeout(() => {
                 document.querySelectorAll('.lb-slide').forEach(slide => {
                     slideObserver.observe(slide);
                 });
+                updateActiveStates(savedIndex);
             }, 100);
         }
     });
@@ -328,9 +317,12 @@ const { lang = 'es' } = Astro.props;
         if (imageId && window.galleryData) {
             const index = window.galleryData.findIndex(i => i.id === imageId);
             if (index !== -1) {
-                window.dispatchEvent(new CustomEvent('openLightbox', {
-                    detail: { id: imageId }
-                }));
+                // Wait for gallery data to be ready
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('openLightbox', {
+                        detail: { id: imageId }
+                    }));
+                }, 500);
             }
         }
     });
