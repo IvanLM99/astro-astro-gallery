@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Portfolio from '../components/Portfolio.astro';
+
+const lang = Astro.url.searchParams.get('lang') || 'es';
+const title = lang === 'en' ? 'My Universe | Cosmos - Iván López' : 'Mi Universo | Cosmos - Iván López';
+---
+
+<Layout title={title} lang={lang}>
+  <Navbar activeTab="universe" lang={lang} />
+  
+  <main class="content-container">
+    <Portfolio lang={lang} />
+  </main>
+</Layout>

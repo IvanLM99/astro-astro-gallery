@@ -1,0 +1,118 @@
+---
+import { Image } from 'astro:assets';
+import img1 from '../assets/2015/IMG-20150719-WA0000.jpg'; // Adjust path if needed
+import img2 from '../assets/2024/IMG_1545.jpeg';
+import img3 from '../assets/2024/IMG_0329.jpeg';
+import imgDivider from '../assets/EclipseUs.jpg';
+import { translations } from '../data/translations.js';
+
+const { lang = 'es' } = Astro.props;
+const t = translations[lang] || translations['es'];
+---
+
+<div class="story-container">
+    <div class="story-row reveal">
+        <div class="story-img">
+            <Image src={img1} alt="First sky image" width={600} format="webp" />
+        </div>
+        <div class="story-text">
+            <h3 data-t="story1_title">{t.story1_title}</h3>
+            <p data-t="story1_text">{t.story1_text}</p>
+        </div>
+    </div>
+
+    <div class="story-row reverse reveal">
+        <div class="story-text">
+            <h3 data-t="story2_title">{t.story2_title}</h3>
+            <p data-t="story2_text">{t.story2_text}</p>
+        </div>
+        <div class="story-img">
+            <Image src={img2} alt="Sunset" width={600} format="webp" />
+        </div>
+    </div>
+
+    <div class="story-row reveal">
+        <div class="story-img">
+            <Image src={img3} alt="Moon telescope" width={600} format="webp" />
+        </div>
+        <div class="story-text">
+            <h3 data-t="story3_title">{t.story3_title}</h3>
+            <p data-t="story3_text">{t.story3_text}</p>
+        </div>
+    </div>
+</div>
+
+<div class="parallax-divider" style={`background-image: url('${imgDivider.src}');`}></div>
+
+<div class="equipment-wrapper">
+    <h2 class="cv-main-title" data-t="equip_title">{t.equip_title}</h2>
+    <div class="equipment-grid">
+        <div class="equip-item reveal">
+            <i class="fas fa-satellite-dish"></i>
+            <span class="equip-label" data-t="eq_dig_tel">{t.eq_dig_tel}</span>
+            <span class="equip-val">Seestar S30 Pro</span>
+        </div>
+        <div class="equip-item reveal">
+            <i class="fas fa-binoculars"></i>
+            <span class="equip-label" data-t="eq_tel">{t.eq_tel}</span>
+            <span class="equip-val">Nassa X210</span>
+        </div>
+        <div class="equip-item reveal">
+            <i class="fas fa-camera"></i>
+            <span class="equip-label" data-t="eq_cam">{t.eq_cam}</span>
+            <span class="equip-val">Olympus E420</span>
+        </div>
+    </div>
+</div>
+
+<div class="cv-wrapper">
+    <h2 class="cv-main-title" data-t="profile_title">{t.profile_title}</h2>
+    
+    <div class="cv-grid">
+        <div class="cv-col">
+            <h4 class="cv-section-head" data-t="exp_title">{t.exp_title}</h4>
+            <div class="cv-item reveal">
+                <span class="cv-role" data-t="job1_role">{t.job1_role}</span>
+                <span class="cv-place" data-t="job1_place">{t.job1_place}</span>
+                <span class="cv-date" data-t="job1_date">{t.job1_date}</span>
+                <p data-t="job1_desc">{t.job1_desc}</p>
+            </div>
+            <div class="cv-item reveal">
+                <span class="cv-role" data-t="job2_role">{t.job2_role}</span>
+                <span class="cv-place" data-t="job2_place">{t.job2_place}</span>
+                <span class="cv-date" data-t="job2_date">{t.job2_date}</span>
+                <p data-t="job2_desc">{t.job2_desc}</p>
+            </div>
+            <div class="cv-item reveal">
+                <span class="cv-role" data-t="job3_role">{t.job3_role}</span>
+                <span class="cv-place" data-t="job3_place">{t.job3_place}</span>
+                <span class="cv-date" data-t="job3_date">{t.job3_date}</span>
+                <p data-t="job3_desc">{t.job3_desc}</p>
+            </div>
+        </div>
+
+        <div class="cv-col">
+            <h4 class="cv-section-head" data-t="skills_title">{t.skills_title}</h4>
+            <ul class="skills-list">
+                <li>Deep Learning (PyTorch, TensorFlow)</li>
+                <li>Generative AI & LLMs</li>
+                <li>Computer Vision & Image Processing</li>
+                <li>Cloud Architecture (GCP, AWS)</li>
+                <li>Python, SQL, Docker</li>
+                <li>Big Data Platforms (Hadoop, Spark)</li>
+            </ul>
+
+            <h4 class="cv-section-head mt-large" data-t="edu_title">{t.edu_title}</h4>
+            <div class="cv-item reveal">
+                <span class="cv-role" data-t="edu1_role">{t.edu1_role}</span>
+                <span class="cv-place" data-t="edu1_place">{t.edu1_place}</span>
+                <span class="cv-date">2023 - 2024</span>
+            </div>
+            <div class="cv-item reveal">
+                <span class="cv-role" data-t="edu2_role">{t.edu2_role}</span>
+                <span class="cv-place" data-t="edu2_place">{t.edu2_place}</span>
+                <span class="cv-date">2017 - 2023</span>
+            </div>
+        </div>
+    </div>
+</div>

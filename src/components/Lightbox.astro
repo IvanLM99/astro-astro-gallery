@@ -1,0 +1,505 @@
+---
+const { lang = 'es' } = Astro.props;
+---
+
+<div id="lightbox">
+    <button class="close-lb" id="lb-close" aria-label="Close Lightbox">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <!-- Progress Bar -->
+    <div class="lb-progress">
+        <div class="lb-progress-fill" id="lb-progress-fill"></div>
+    </div>
+
+    <!-- Vertical Feed Container -->
+    <div class="lb-feed" id="lb-feed">
+        <!-- Slides injected via JS -->
+    </div>
+    
+    <!-- Navigation Sidebar (Desktop) -->
+    <div class="lb-nav-sidebar" id="lb-nav-sidebar">
+        <button class="lb-nav-arrow up" id="lb-up" aria-label="Previous image">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+        <span class="lb-counter" id="lb-counter">1 / 100</span>
+        <button class="lb-nav-arrow down" id="lb-down" aria-label="Next image">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    import { translations } from '../data/translations.js';
+
+    let currentLang = window.initialLang || document.documentElement.lang || 'es';
+    let currentIndex = 0;
+    let isScrolling = false;
+    
+    const lightbox = document.getElementById('lightbox');
+    const lbFeed = document.getElementById('lb-feed');
+    const lbCounter = document.getElementById('lb-counter');
+    const progressFill = document.getElementById('lb-progress-fill');
+    
+    // Zoom state
+    let scale = 1;
+    let pointX = 0;
+    let pointY = 0;
+    let start = { x: 0, y: 0 };
+    let panning = false;
+    let activeZoomImage = null;
+
+    function resetZoom() {
+        scale = 1;
+        pointX = 0;
+        pointY = 0;
+        if (activeZoomImage) {
+            activeZoomImage.style.transform = `translate(0px, 0px) scale(1)`;
+            activeZoomImage.style.transition = 'transform 0.3s ease';
+            setTimeout(() => {
+                if (activeZoomImage) activeZoomImage.style.transition = 'none';
+            }, 300);
+        }
+    }
+
+    function setupZoom(imgElement) {
+        activeZoomImage = imgElement;
+        
+        // Prevent default drag
+        imgElement.ondragstart = () => false;
+
+        // --- Mouse Zoom (Wheel) ---
+        imgElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            const xs = (e.clientX - pointX) / scale;
+            const ys = (e.clientY - pointY) / scale;
+            
+            const delta = -e.deltaY;
+            
+            (delta > 0) ? (scale *= 1.2) : (scale /= 1.2);
+            
+            // Limit scale
+            if (scale < 1) scale = 1;
+            if (scale > 5) scale = 5;
+
+            // Adjust point to zoom into cursor
+            if (scale === 1) {
+                pointX = 0;
+                pointY = 0;
+            } else {
+                pointX = e.clientX - xs * scale;
+                pointY = e.clientY - ys * scale;
+            }
+
+            imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        }, { passive: false });
+
+        // --- Mouse Pan ---
+        imgElement.addEventListener('mousedown', (e) => {
+            if (scale > 1) {
+                e.preventDefault();
+                start = { x: e.clientX - pointX, y: e.clientY - pointY };
+                panning = true;
+                imgElement.style.cursor = 'grabbing';
+            }
+        });
+
+        imgElement.addEventListener('mousemove', (e) => {
+            if (!panning || scale === 1) return;
+            e.preventDefault();
+            pointX = e.clientX - start.x;
+            pointY = e.clientY - start.y;
+            imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            panning = false;
+            if (imgElement) imgElement.style.cursor = scale > 1 ? 'grab' : 'default';
+        });
+
+        // --- Touch Pinch & Pan ---
+        let initialDistance = null;
+        let initialScale = 1;
+
+        imgElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialDistance = dist;
+                initialScale = scale;
+            } else if (e.touches.length === 1 && scale > 1) {
+                start = { x: e.touches[0].clientX - pointX, y: e.touches[0].clientY - pointY };
+                panning = true;
+            }
+        }, { passive: false });
+
+        imgElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault(); // Prevent scroll while pinching
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                
+                if (initialDistance) {
+                    const newScale = initialScale * (dist / initialDistance);
+                    scale = Math.max(1, Math.min(newScale, 5));
+                    
+                    if (scale === 1) {
+                        pointX = 0; pointY = 0;
+                    }
+                    imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                }
+            } else if (e.touches.length === 1 && panning && scale > 1) {
+                e.preventDefault(); // Prevent scroll while panning
+                pointX = e.touches[0].clientX - start.x;
+                pointY = e.touches[0].clientY - start.y;
+                imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+            }
+        }, { passive: false });
+
+        imgElement.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                initialDistance = null;
+            }
+            if (e.touches.length === 0) {
+                panning = false;
+            }
+        });
+        
+        // --- Double Click/Tap Zoom ---
+        let lastTap = 0;
+        imgElement.addEventListener('click', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                if (scale > 1) {
+                    resetZoom();
+                } else {
+                    scale = 2.5;
+                    const rect = imgElement.getBoundingClientRect();
+                    const xs = (e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width/2) - rect.left;
+                    const ys = (e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height/2) - rect.top;
+                    
+                    pointX = (window.innerWidth / 2) - (xs * scale);
+                    pointY = (window.innerHeight / 2) - (ys * scale);
+                    
+                    imgElement.style.transition = 'transform 0.3s ease';
+                    imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                    imgElement.style.cursor = 'grab';
+                    
+                    setTimeout(() => { imgElement.style.transition = 'none'; }, 300);
+                }
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        });
+    }
+    
+    // Build vertical feed
+    function buildFeed(startIndex = 0) {
+        if (!lbFeed || !window.galleryData) return;
+        
+        lbFeed.innerHTML = '';
+        resetZoom();
+        
+        window.galleryData.forEach((item, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'lb-slide';
+            slide.dataset.index = index;
+            slide.dataset.id = item.id;
+            
+            const title = currentLang === 'en' ? (item.title_en || item.title_es) : item.title_es;
+            const story = currentLang === 'en' ? (item.story_en || item.story_es) : item.story_es;
+            const objName = currentLang === 'en' ? (item.object_en || item.object_es) : item.object_es;
+            
+            const t = translations[currentLang] || translations['es'];
+            
+            slide.innerHTML = `
+                <div class="lb-slide-content">
+                    <div class="lb-image-section">
+                        <div class="lb-image-wrapper">
+                            <img class="lb-slide-img zoomable-img" 
+                                 src="${item.thumbnailSrc || item.src}" 
+                                 data-full="${item.src}"
+                                 alt="${title}" 
+                                 loading="${Math.abs(index - startIndex) <= 1 ? 'eager' : 'lazy'}">
+                            <div class="lb-loading-skeleton"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="lb-info-section">
+                        <div class="lb-info-header">
+                            <h2 class="lb-slide-title">${title}</h2>
+                            ${objName && objName !== title ? `<span class="lb-object-name">${objName}</span>` : ''}
+                        </div>
+                        
+                        ${story ? `
+                        <div class="lb-slide-story">
+                            <i class="fas fa-quote-left story-icon"></i>
+                            <p>${story}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="lb-slide-meta">
+                            ${item.date ? `
+                            <div class="meta-item">
+                                <i class="far fa-calendar"></i>
+                                <span>${item.date}</span>
+                            </div>` : ''}
+                            ${item.exposure ? `
+                            <div class="meta-item">
+                                <i class="far fa-clock"></i>
+                                <span>${item.exposure}</span>
+                            </div>` : ''}
+                            ${item.equipment ? `
+                            <div class="meta-item">
+                                <i class="fas fa-camera"></i>
+                                <span>${item.equipment}</span>
+                            </div>` : ''}
+                        </div>
+                        
+                        <div class="lb-slide-tags">
+                            <span class="lb-category-tag">${item.category}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load full image after thumbnail
+            const img = slide.querySelector('.lb-slide-img');
+            const skeleton = slide.querySelector('.lb-loading-skeleton');
+            const fullImg = new Image();
+            fullImg.src = item.src;
+            fullImg.onload = () => {
+                if (img) {
+                    img.src = item.src;
+                    img.classList.add('loaded');
+                }
+                if (skeleton) skeleton.style.display = 'none';
+            };
+            
+            if (index === startIndex && img) {
+                setupZoom(img);
+            }
+            
+            lbFeed.appendChild(slide);
+        });
+        
+        // Scroll to start index
+        requestAnimationFrame(() => {
+            scrollToIndex(startIndex, false);
+        });
+    }
+    
+    function scrollToIndex(index, smooth = true) {
+        if (index < 0 || index >= window.galleryData.length) return;
+        
+        const slides = lbFeed.querySelectorAll('.lb-slide');
+        if (slides[index]) {
+            if (smooth) {
+                slides[index].scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            } else {
+                lbFeed.scrollTop = slides[index].offsetTop;
+            }
+        }
+    }
+    
+    function updateActiveStates(index) {
+        if (index === currentIndex) return;
+        
+        resetZoom();
+        currentIndex = index;
+        const total = window.galleryData.length;
+        
+        const slides = lbFeed.querySelectorAll('.lb-slide');
+        if (slides[index]) {
+            const img = slides[index].querySelector('.zoomable-img');
+            if (img) setupZoom(img);
+        }
+        
+        // Update Counter
+        if (lbCounter) lbCounter.textContent = `${index + 1} / ${total}`;
+        
+        // Update Progress Bar
+        if (progressFill) progressFill.style.width = `${((index + 1) / total) * 100}%`;
+        
+        // Update URL
+        const item = window.galleryData[index];
+        if (item) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('image', item.id);
+            window.history.replaceState({ imageId: item.id }, '', url);
+        }
+        
+        // Preload next/prev
+        preloadImage(index - 1);
+        preloadImage(index + 1);
+    }
+    
+    function preloadImage(idx) {
+        if (idx < 0 || idx >= window.galleryData.length) return;
+        const item = window.galleryData[idx];
+        if (item && !item.preloaded) {
+            const img = new Image();
+            img.src = item.src;
+            item.preloaded = true;
+        }
+    }
+    
+    // Intersection Observer for scroll tracking
+    const observerOptions = {
+        root: lbFeed,
+        threshold: 0.6
+    };
+    
+    const slideObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const index = parseInt(entry.target.dataset.index);
+                if (!isNaN(index) && index !== currentIndex) {
+                    updateActiveStates(index);
+                }
+            }
+        });
+    }, observerOptions);
+    
+    // Event Listeners
+    window.addEventListener('openLightbox', (e) => {
+        const id = e.detail.id;
+        const data = window.galleryData || [];
+        const index = data.findIndex(i => i.id === id);
+        
+        if (index !== -1) {
+            openLightbox();
+            buildFeed(index);
+            
+            // Observe all slides
+            setTimeout(() => {
+                document.querySelectorAll('.lb-slide').forEach(slide => {
+                    slideObserver.observe(slide);
+                });
+                updateActiveStates(index);
+            }, 100);
+        }
+    });
+    
+    function openLightbox() {
+        lightbox.classList.add('active');
+        document.body.classList.add('no-scroll');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.classList.remove('no-scroll');
+        document.body.style.overflow = '';
+        
+        // Clear image param but keep lang and other params
+        const url = new URL(window.location.href);
+        url.searchParams.delete('image');
+        window.history.replaceState({}, '', url);
+    }
+    
+    // Navigation buttons
+    document.getElementById('lb-close')?.addEventListener('click', closeLightbox);
+    document.getElementById('lb-up')?.addEventListener('click', () => scrollToIndex(currentIndex - 1));
+    document.getElementById('lb-down')?.addEventListener('click', () => scrollToIndex(currentIndex + 1));
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        
+        switch(e.key) {
+            case "Escape":
+                closeLightbox();
+                break;
+            case "ArrowUp":
+            case "ArrowLeft":
+                e.preventDefault();
+                scrollToIndex(currentIndex - 1);
+                break;
+            case "ArrowDown":
+            case "ArrowRight":
+            case " ":
+                e.preventDefault();
+                scrollToIndex(currentIndex + 1);
+                break;
+            case "Home":
+                e.preventDefault();
+                scrollToIndex(0);
+                break;
+            case "End":
+                e.preventDefault();
+                scrollToIndex(window.galleryData.length - 1);
+                break;
+        }
+    });
+    
+    // Touch/swipe handling
+    let touchStartY = 0;
+    
+    lbFeed?.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    }, {passive: true});
+    
+    lbFeed?.addEventListener('touchend', (e) => {
+        const touchEndY = e.changedTouches[0].screenY;
+        const diff = touchStartY - touchEndY;
+        const threshold = 50;
+        
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0) {
+                scrollToIndex(currentIndex + 1);
+            } else {
+                scrollToIndex(currentIndex - 1);
+            }
+        }
+    }, {passive: true});
+    
+    // Language change - rebuild feed with new language
+    window.addEventListener('langChange', (e) => {
+        currentLang = e.detail.lang;
+        if (lightbox.classList.contains('active')) {
+            const savedIndex = currentIndex;
+            buildFeed(savedIndex);
+            setTimeout(() => {
+                document.querySelectorAll('.lb-slide').forEach(slide => {
+                    slideObserver.observe(slide);
+                });
+                updateActiveStates(savedIndex);
+            }, 100);
+        }
+    });
+    
+    // Close on background click
+    lightbox?.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    
+    // Check URL on load for direct image access
+    window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const imageId = params.get('image');
+        if (imageId && window.galleryData) {
+            const index = window.galleryData.findIndex(i => i.id === imageId);
+            if (index !== -1) {
+                // Wait for gallery data to be ready
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('openLightbox', {
+                        detail: { id: imageId }
+                    }));
+                }, 500);
+            }
+        }
+    });
+</script>
