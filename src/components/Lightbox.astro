@@ -35,7 +35,6 @@ const { lang = 'es' } = Astro.props;
     let currentLang = window.initialLang || document.documentElement.lang || 'es';
     let currentIndex = 0;
     let isScrolling = false;
-    let scrollPositionBeforeLightbox = 0;
     
     const lightbox = document.getElementById('lightbox');
     const lbFeed = document.getElementById('lb-feed');
@@ -73,14 +72,11 @@ const { lang = 'es' } = Astro.props;
         imgElement.addEventListener('wheel', (e) => {
             e.preventDefault();
             
-            const rect = imgElement.getBoundingClientRect();
-            // Calculate cursor position relative to the image
-            const clientX = e.clientX - rect.left;
-            const clientY = e.clientY - rect.top;
-
-            // Compute current scale and the new scale
-            const oldScale = scale;
+            const xs = (e.clientX - pointX) / scale;
+            const ys = (e.clientY - pointY) / scale;
+            
             const delta = -e.deltaY;
+            
             (delta > 0) ? (scale *= 1.2) : (scale /= 1.2);
             
             // Limit scale
@@ -92,10 +88,8 @@ const { lang = 'es' } = Astro.props;
                 pointX = 0;
                 pointY = 0;
             } else {
-                // Determine how much the cursor point scaled and offset our translation point
-                const ratio = scale / oldScale;
-                pointX = clientX - ratio * (clientX - pointX);
-                pointY = clientY - ratio * (clientY - pointY);
+                pointX = e.clientX - xs * scale;
+                pointY = e.clientY - ys * scale;
             }
 
             imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
@@ -193,8 +187,8 @@ const { lang = 'es' } = Astro.props;
                     const xs = (e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width/2) - rect.left;
                     const ys = (e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height/2) - rect.top;
                     
-                    pointX = -xs * (scale - 1);
-                    pointY = -ys * (scale - 1);
+                    pointX = (window.innerWidth / 2) - (xs * scale);
+                    pointY = (window.innerHeight / 2) - (ys * scale);
                     
                     imgElement.style.transition = 'transform 0.3s ease';
                     imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
@@ -400,21 +394,15 @@ const { lang = 'es' } = Astro.props;
     });
     
     function openLightbox() {
-        scrollPositionBeforeLightbox = window.scrollY; // Save the current scroll position
         lightbox.classList.add('active');
-        
-        // Maintain the visual scroll position of the background content
-        document.body.style.top = `-${scrollPositionBeforeLightbox}px`;
         document.body.classList.add('no-scroll');
+        document.body.style.overflow = 'hidden';
     }
     
     function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.classList.remove('no-scroll');
-        document.body.style.top = '';
-        
-        // Restore scroll position
-        window.scrollTo(0, scrollPositionBeforeLightbox);
+        document.body.style.overflow = '';
         
         // Clear image param but keep lang and other params
         const url = new URL(window.location.href);
@@ -461,15 +449,13 @@ const { lang = 'es' } = Astro.props;
     let touchStartY = 0;
     
     lbFeed?.addEventListener('touchstart', (e) => {
-        if (scale > 1) return; // Disable swipe to change image if zoomed in
         touchStartY = e.changedTouches[0].screenY;
     }, {passive: true});
     
     lbFeed?.addEventListener('touchend', (e) => {
-        if (scale > 1) return; // Disable swipe to change image if zoomed in
         const touchEndY = e.changedTouches[0].screenY;
         const diff = touchStartY - touchEndY;
-        const threshold = 100; // Increased threshold
+        const threshold = 50;
         
         if (Math.abs(diff) > threshold) {
             if (diff > 0) {

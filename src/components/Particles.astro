@@ -36,9 +36,7 @@
 
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
-            // Since the canvas is fixed and moves 0.05px per 1px scrolled (in Layout.astro)
-            // we have to translate the window.clientY into the canvas's local coordinates.
-            mouse.y = e.clientY - (window.scrollY * 0.05);
+            mouse.y = e.clientY;
             mouseActive = true;
             clearTimeout(mouseTimer);
             mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
