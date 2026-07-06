@@ -1,0 +1,40 @@
+name: Auto Update Gallery JSON
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/assets/**'
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Update Script
+        run: node scripts/update-gallery.js
+
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/data/gallery_data.json
+          # Check if there are any changes to commit
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "chore: auto-update gallery_data.json [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi

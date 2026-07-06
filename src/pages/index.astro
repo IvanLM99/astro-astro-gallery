@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Gallery from '../components/Gallery.astro';
+import Lightbox from '../components/Lightbox.astro';
+
+const lang = Astro.url.searchParams.get('lang') || 'es';
+const title = lang === 'en' ? 'Gallery | Cosmos - Iván López' : 'Galería | Cosmos - Iván López';
+---
+
+<Layout title={title} lang={lang}>
+  <Navbar activeTab="gallery" lang={lang} />
+  
+  <main class="content-container">
+    <Gallery lang={lang} />
+  </main>
+
+  <Lightbox lang={lang} />
+</Layout>

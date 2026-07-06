@@ -1,0 +1,161 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { translations } from '../data/translations.js';
+
+const { activeTab = 'gallery', lang = 'es' } = Astro.props;
+const t = translations[lang] || translations['es'];
+
+// Use root URL for gallery, /universe for portfolio
+const homeUrl = getRelativeLocaleUrl(lang, '');
+const galleryUrl = getRelativeLocaleUrl(lang, '');
+const universeUrl = getRelativeLocaleUrl(lang, 'universe');
+---
+
+<nav id="navbar">
+    <div class="nav-left">
+        <a href={homeUrl} class="site-title">I. LOPEZ</a>
+    </div>
+
+    <div class="nav-center">
+        <a href={galleryUrl} class={`menu-btn ${activeTab === 'gallery' ? 'active' : ''}`} id="btn-gallery" data-t="nav_gallery">{t.nav_gallery}</a>
+        <a href={universeUrl} class={`menu-btn ${activeTab === 'universe' ? 'active' : ''}`} id="btn-universe" data-t="nav_portfolio">{t.nav_portfolio}</a>
+    </div>
+
+    <div class="nav-right">
+        <div class="lang-select">
+            <span id="lang-en" class={`lang ${lang === 'en' ? 'active' : ''}`} data-lang="en">EN</span> /
+            <span id="lang-es" class={`lang ${lang === 'es' ? 'active' : ''}`} data-lang="es">ES</span>
+        </div>
+    </div>
+</nav>
+
+<script is:inline>
+    // Scroll to top on page load/refresh
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+</script>
+
+<script>
+    import { translations } from '../data/translations.js';
+
+    // Navbar scroll behavior
+    const navbar = document.getElementById('navbar');
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    function updateNavbar() {
+        const currentScrollY = window.scrollY;
+        if(navbar) {
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                navbar.classList.add('nav-hidden');
+            } else {
+                navbar.classList.remove('nav-hidden');
+            }
+            if (currentScrollY > 50) {
+                navbar.classList.add('nav-faded');
+            } else {
+                navbar.classList.remove('nav-faded');
+            }
+
+            const stBtn = document.getElementById('scroll-top-btn');
+            if(stBtn) {
+                 if(currentScrollY > 500) stBtn.classList.add('visible');
+                 else stBtn.classList.remove('visible');
+            }
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(updateNavbar);
+            ticking = true;
+        }
+    }, {passive: true});
+
+    // Language Logic - Fixed for SEO-friendly URLs
+    const langEn = document.getElementById('lang-en');
+    const langEs = document.getElementById('lang-es');
+    let currentLang = document.documentElement.lang || 'es';
+    
+    function setLanguage(targetLang, force = false) {
+        if (targetLang === currentLang && !force) return;
+
+        currentLang = targetLang;
+        localStorage.setItem('preferred-lang', targetLang);
+        
+        // Update active classes
+        langEn?.classList.toggle('active', targetLang === 'en');
+        langEs?.classList.toggle('active', targetLang === 'es');
+        
+        // Update html lang attribute
+        document.documentElement.lang = targetLang;
+        
+        // Update URL - Only add param for English
+        const url = new URL(window.location.href);
+        if (targetLang === 'en') {
+            url.searchParams.set('lang', 'en');
+        } else {
+            url.searchParams.delete('lang');
+        }
+        window.history.replaceState({}, '', url);
+        
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('langChange', { detail: { lang: targetLang } }));
+        
+        // Update all translatable elements
+        updatePageLanguage(targetLang);
+    }
+
+    function updatePageLanguage(lang) {
+        document.querySelectorAll('[data-t]').forEach(el => {
+            const key = el.getAttribute('data-t');
+            if (translations[lang] && translations[lang][key]) {
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.value = translations[lang][key];
+                } else {
+                    el.textContent = translations[lang][key];
+                }
+            }
+        });
+
+        // Update document title
+        const isUniverse = window.location.pathname.includes('/universe');
+        const titleKey = isUniverse ? 'page_title_universe' : 'page_title_gallery';
+        if (translations[lang] && translations[lang][titleKey]) {
+            document.title = translations[lang][titleKey];
+        }
+    }
+
+    langEn?.addEventListener('click', () => setLanguage('en'));
+    langEs?.addEventListener('click', () => setLanguage('es'));
+
+    // Initialize - Check URL param first, then localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLang = urlParams.get('lang');
+    const savedLang = localStorage.getItem('preferred-lang');
+    
+    // Determine initial language
+    let initialLang = 'es'; // Default
+    if (urlLang === 'en' || urlLang === 'es') {
+        initialLang = urlLang;
+    } else if (savedLang === 'en' || savedLang === 'es') {
+        initialLang = savedLang;
+    }
+    
+    // Apply if different from current
+    if (initialLang !== currentLang || urlLang) {
+        setLanguage(initialLang, true);
+    } else {
+        updatePageLanguage(initialLang);
+        // Ensure clean URL (no ?lang=es)
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('lang') === 'es') {
+            url.searchParams.delete('lang');
+            window.history.replaceState({}, '', url);
+        }
+    }
+</script>

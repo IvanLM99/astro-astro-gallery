@@ -1,0 +1,329 @@
+---
+import { Image, getImage } from 'astro:assets';
+import galleryDataRaw from '../data/gallery_data.json';
+import { translations } from '../data/translations.js';
+
+const { lang = 'es' } = Astro.props;
+const t = translations[lang] || translations['es'];
+
+// 1. Sort Data
+const galleryData = galleryDataRaw.sort((a, b) => {
+    const d1 = new Date(Number(a.year), Number(a.month) - 1, Number(a.day));
+    const d2 = new Date(Number(b.year), Number(b.month) - 1, Number(b.day));
+    return d2.getTime() - d1.getTime();
+});
+
+// 2. Glob all images
+const images = import.meta.glob<{ default: ImageMetadata }>('/src/assets/**/*.{jpeg,jpg,png,tiff,webp,JPEG,JPG,PNG}');
+
+// Fix for case sensitivity
+const normalizedImages = {};
+Object.keys(images).forEach(key => {
+    normalizedImages[key.toLowerCase()] = images[key];
+});
+
+// 3. Resolve images
+const resolvedData = await Promise.all(galleryData.map(async (item) => {
+    const originalPath = `/src/${item.src}`;
+    let imageImport = images[originalPath];
+    if (!imageImport) {
+        imageImport = normalizedImages[originalPath.toLowerCase()];
+    }
+
+    if (!imageImport) {
+        console.error(`❌ Image missing: ${originalPath}`);
+        return null;
+    }
+
+    const img = await imageImport();
+    return {
+        ...item,
+        imageMetadata: img.default
+    };
+}));
+
+const validItems = resolvedData.filter(i => i !== null);
+
+const grouped = validItems.reduce((acc, item) => {
+    if (!acc[item.year]) acc[item.year] = [];
+    acc[item.year].push(item);
+    return acc;
+}, {});
+
+const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+const categories = [...new Set(validItems.map(i => i.category))].sort();
+
+// 4. Create Client-Side Map with HIGH QUALITY Thumbnails
+const lightboxMap = await Promise.all(validItems.map(async (item) => {
+    let thumbnailSrc = '';
+    try {
+        const thumb = await getImage({
+            src: item.imageMetadata,
+            width: 30,        // INCREASED from 15
+            format: 'webp',
+            quality: 50        // INCREASED from 15
+        });
+        thumbnailSrc = thumb.src;
+    } catch (e) {
+        console.error("Failed to generate thumbnail for", item.src);
+        thumbnailSrc = item.imageMetadata.src; // Fallback to full image
+    }
+
+    return {
+        ...item,
+        src: item.imageMetadata.src,
+        thumbnailSrc: thumbnailSrc
+    };
+}));
+---
+
+<header class="gallery-header">
+    <div class="quote-container">
+        <h1 id="quote-text" class="philosophical-quote"></h1>
+        <p id="quote-author" class="quote-author"></p>
+    </div>
+
+    <div class="filters-wrapper">
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all" data-t="filter_all">{t.filter_all}</button>
+            {categories.map(cat => (
+                <button class="filter-btn" data-filter={cat} data-t={`cat_${cat.toLowerCase()}`}>
+                    {t[`cat_${cat.toLowerCase()}`] || cat}
+                </button>
+            ))}
+        </div>
+    </div>
+</header>
+
+<div id="gallery-root">
+    {years.map(year => (
+        <div class="year-section" id={`year-${year}`}>
+            <h2 class="year-title collapsible reveal" data-year={year}>{year} <span class="toggle-icon">−</span></h2>
+            <div class="year-content" data-year-content={year}>
+                <div class="gallery-grid">
+                    {grouped[year].map((item, index) => (
+                        <div class={`g-item reveal ${item.category}`} data-id={item.id}>
+                            <Image
+                                src={item.imageMetadata}
+                                alt={item.title_en}
+                                width={400}
+                                quality={75}
+                                format="webp"
+                                loading={index < 4 ? "eager" : "lazy"}
+                                decoding="async"
+                            />
+                            <div class="overlay">
+                                <div class="overlay-content">
+                                    <span class="overlay-title title-en">{item.title_en || item.title_es}</span>
+                                    <span class="overlay-title title-es">{item.title_es}</span>
+                                    <span class="overlay-category" data-t={`cat_${item.category.toLowerCase()}`}>{t[`cat_${item.category.toLowerCase()}`] || item.category}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    ))}
+</div>
+
+<script is:inline define:vars={{ lightboxMap: JSON.stringify(lightboxMap), initialLang: lang }}>
+    window.galleryData = JSON.parse(lightboxMap);
+    window.initialLang = initialLang;
+</script>
+
+<script>
+    import { translations } from '../data/translations.js';
+
+    // Quote Logic - No transition on language change, only on quote rotation
+    const quotes = [
+        { text_en: "\"We are made of starstuff.\"", text_es: "\"Estamos hechos de polvo de estrellas.\"", author: "- Carl Sagan" },
+        { text_en: "\"Somewhere, something incredible is waiting to be known.\"", text_es: "\"En algún lugar, algo increíble espera ser descubierto.\"", author: "- Carl Sagan" },
+        { text_en: "\"Astronomy compels the soul to look upwards and leads us from this world to another.\"", text_es: "\"La astronomía obliga al alma a mirar hacia arriba y nos lleva de este mundo a otro.\"", author: "- Plato" },
+        { text_en: "\"I am not an Athenian or a Greek, but a citizen of the world.\"", text_es: "\"No soy ateniense ni griego, sino ciudadano del mundo.\"", author: "- Socrates" },
+        { text_en: "\"Wonder is the beginning of wisdom.\"", text_es: "\"El asombro es el comienzo de la sabiduría.\"", author: "- Socrates" },
+        { text_en: "\"In all things of nature there is something of the marvelous.\"", text_es: "\"En todas las cosas de la naturaleza hay algo de maravilloso.\"", author: "- Aristotle" },
+        { text_en: "\"All men by nature desire to know.\"", text_es: "\"Todos los hombres desean por naturaleza saber.\"", author: "- Aristotle" },
+        { text_en: "\"Dwell on the beauty of life. Watch the stars, and see yourself running with them.\"", text_es: "\"Detente en la belleza de la vida. Mira las estrellas y vete corriendo con ellas.\"", author: "- Marcus Aurelius" },
+        { text_en: "\"Reserve your right to think, for even to think wrongly is better than not to think at all.\"", text_es: "\"Conserva tu derecho a pensar, porque incluso pensar erróneamente es mejor que no pensar en absoluto.\"", author: "- Hypatia of Alexandria" },
+        { text_en: "\"To know that we know what we know, and to know that we do not know what we do not know, that is true knowledge.\"", text_es: "\"Saber que sabemos lo que sabemos, y saber que no sabemos lo que no sabemos, ese es el verdadero conocimiento.\"", author: "- Nicolaus Copernicus" },
+        { text_en: "\"The sun, with all those planets revolving around it and dependent on it, can still ripen a bunch of grapes as if it had nothing else in the universe to do.\"", text_es: "\"El sol, con todos esos planetas girando a su alrededor y dependiendo de él, todavía puede madurar un racimo de uvas como si no tuviera nada más que hacer en el universo.\"", author: "- Galileo Galilei" },
+        { text_en: "\"Mathematics is the language in which God has written the universe.\"", text_es: "\"Las matemáticas son el lenguaje en el que Dios ha escrito el universo.\"", author: "- Galileo Galilei" },
+        { text_en: "\"The treasures of the built-in secrets of the universe are not to be found in a single field.\"", text_es: "\"Los tesoros de los secretos ocultos del universo no se encuentran en un solo campo.\"", author: "- Johannes Kepler" },
+        { text_en: "\"I seem to have been only like a boy playing on the seashore... whilst the great ocean of truth lay all undiscovered before me.\"", text_es: "\"Parezco haber sido solo como un niño jugando en la orilla del mar... mientras el gran océano de la verdad yacía todo sin descubrir ante mí.\"", author: "- Isaac Newton" },
+        { text_en: "\"If I have seen further it is by standing on the shoulders of Giants.\"", text_es: "\"Si he visto más lejos es poniéndome sobre los hombros de Gigantes.\"", author: "- Isaac Newton" },
+        { text_en: "\"Equipped with his five senses, man explores the universe around him and calls the adventure Science.\"", text_es: "\"Equipado con sus cinco sentidos, el hombre explora el universo que lo rodea y llama a la aventura Ciencia.\"", author: "- Edwin Hubble" },
+        { text_en: "\"The most beautiful thing we can experience is the mysterious. It is the source of all true art and science.\"", text_es: "\"Lo más hermoso que podemos experimentar es lo misterioso. Es la fuente de todo arte y ciencia verdaderos.\"", author: "- Albert Einstein" },
+        { text_en: "\"Imagination is more important than knowledge. Knowledge is limited. Imagination encircles the world.\"", text_es: "\"La imaginación es más importante que el conocimiento. El conocimiento es limitado. La imaginación rodea al mundo.\"", author: "- Albert Einstein" },
+        { text_en: "\"Look deep into nature, and then you will understand everything better.\"", text_es: "\"Mira profundamente en la naturaleza y entonces entenderás todo mejor.\"", author: "- Albert Einstein" },
+        { text_en: "\"Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.\"", text_es: "\"Nada en la vida es para ser temido, es sólo para ser comprendido. Ahora es el momento de entender más, para que podamos temer menos.\"", author: "- Marie Curie" },
+        { text_en: "\"I'd rather have questions that can't be answered than answers that can't be questioned.\"", text_es: "\"Prefiero tener preguntas que no pueden ser respondidas que respuestas que no pueden ser cuestionadas.\"", author: "- Richard Feynman" },
+        { text_en: "\"Nature uses only the longest threads to weave her patterns, so that each small piece of her fabric reveals the organization of the entire tapestry.\"", text_es: "\"La naturaleza usa solo los hilos más largos para tejer sus patrones, de modo que cada pequeña pieza de su tela revela la organización de todo el tapiz.\"", author: "- Richard Feynman" },
+        { text_en: "\"Remember to look up at the stars and not down at your feet. Be curious.\"", text_es: "\"Recuerda mirar hacia arriba a las estrellas y no hacia abajo a tus pies. Sé curioso.\"", author: "- Stephen Hawking" },
+        { text_en: "\"The universe does not allow perfection.\"", text_es: "\"El universo no permite la perfection.\"", author: "- Stephen Hawking" },
+        { text_en: "\"We are just an advanced breed of monkeys on a minor planet of a very average star. But we can understand the Universe. That makes us something very special.\"", text_es: "\"Solo somos una raza avanzada de monos en un planeta menor de una estrella muy promedio. Pero podemos entender el Universo. Eso nos hace algo muy especial.\"", author: "- Stephen Hawking" },
+        { text_en: "\"When you change the way you look at things, the things you look at change.\"", text_es: "\"Cuando cambias la forma en que miras las cosas, las cosas que miras cambian.\"", author: "- Max Planck" },
+        { text_en: "\"The cosmos is within us. We are made of star-stuff. We are a way for the cosmos to know itself.\"", text_es: "\"El cosmos está dentro de nosotros. Estamos hechos de material estelar. Somos una forma de que el cosmos se conozca a sí mismo.\"", author: "- Carl Sagan" },
+        { text_en: "\"For small creatures such as we the vastness is bearable only through love.\"", text_es: "\"Para criaturas pequeñas como nosotros, la inmensidad es soportable solo a través del amor.\"", author: "- Carl Sagan" },
+        { text_en: "\"The universe is under no obligation to make sense to you.\"", text_es: "\"El universo no tiene la obligación de tener sentido para ti.\"", author: "- Neil deGrasse Tyson" },
+        { text_en: "\"We are biologically connected to everything in the world and atomically connected to all atoms in the universe. We are not figuratively, but literally stardust.\"", text_es: "\"Estamos conectados biológicamente con todo en el mundo y atómicamente conectados con todos los átomos del universo. No somos figurativamente, sino literalmente polvo de estrellas.\"", author: "- Neil deGrasse Tyson" },
+        { text_en: "\"The story of the universe is our story. We are the cosmos made conscious.\"", text_es: "\"La historia del universo es nuestra historia. Somos el cosmos hecho consciente.\"", author: "- Brian Cox" },
+        { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author: "- Michio Kaku" }
+    ];
+
+
+    let currentLang = document.documentElement.lang || 'es';
+    let quoteQueue = [];
+    let currentQuoteIndex = 0;
+    let isLangChange = false;
+    
+    const quoteTextEl = document.getElementById('quote-text');
+    const quoteAuthEl = document.getElementById('quote-author');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    // Shuffle array using Fisher-Yates
+    function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    // Initialize queue with shuffled quotes
+    function initQuoteQueue() {
+        quoteQueue = shuffleArray(quotes);
+        currentQuoteIndex = 0;
+    }
+
+    function updateQuoteDisplay(skipTransition = false) {
+        if(!quoteTextEl || !quoteAuthEl) return;
+        const q = quoteQueue[currentQuoteIndex];
+        const text = currentLang === 'en' ? q.text_en : q.text_es;
+        
+        if (skipTransition) {
+            // Instant update for language change - no transition
+            quoteTextEl.style.transition = 'none';
+            quoteAuthEl.style.transition = 'none';
+            quoteTextEl.textContent = text;
+            quoteAuthEl.textContent = q.author;
+            quoteTextEl.classList.add('visible');
+            quoteAuthEl.classList.add('visible');
+            
+            // Restore transitions after a brief delay
+            setTimeout(() => {
+                quoteTextEl.style.transition = '';
+                quoteAuthEl.style.transition = '';
+            }, 50);
+        } else {
+            // Normal fade transition for quote rotation
+            const fadeTime = isMobile ? 800 : 500;
+            
+            quoteTextEl.classList.remove('visible');
+            quoteAuthEl.classList.remove('visible');
+            
+            setTimeout(() => {
+                quoteTextEl.textContent = text;
+                quoteAuthEl.textContent = q.author;
+                quoteTextEl.classList.add('visible');
+                quoteAuthEl.classList.add('visible');
+            }, fadeTime);
+        }
+    }
+
+    function nextQuote() {
+        currentQuoteIndex++;
+        if (currentQuoteIndex >= quoteQueue.length) {
+            initQuoteQueue(); // Reshuffle when all shown
+        }
+        updateQuoteDisplay();
+    }
+
+    // Initialize
+    initQuoteQueue();
+    quoteTextEl.textContent = currentLang === 'en' ? quoteQueue[0].text_en : quoteQueue[0].text_es;
+    quoteAuthEl.textContent = quoteQueue[0].author;
+    
+    setTimeout(() => {
+        if(quoteTextEl) quoteTextEl.classList.add('visible');
+        if(quoteAuthEl) quoteAuthEl.classList.add('visible');
+    }, 100);
+
+    // Change quote every 10 seconds (slower for better readability)
+    setInterval(nextQuote, 10000);
+
+    // Lang Change Listener - Instant update, no transition
+    window.addEventListener('langChange', (e) => {
+        currentLang = e.detail.lang;
+        isLangChange = true;
+        updateQuoteDisplay(true); // true = skip transition
+        isLangChange = false;
+    });
+
+    // Filtering Logic
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const yearSections = document.querySelectorAll('.year-section');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const target = e.target;
+            const category = target.getAttribute('data-filter');
+
+            filterBtns.forEach(b => b.classList.remove('active'));
+            target.classList.add('active');
+
+            yearSections.forEach((section) => {
+                let visibleCount = 0;
+                const items = section.querySelectorAll('.g-item');
+                items.forEach((item) => {
+                    if(category === 'all' || item.classList.contains(category)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                section.style.display = visibleCount === 0 ? 'none' : 'block';
+            });
+        });
+    });
+
+    // Collapsible Year Sections
+    const yearTitles = document.querySelectorAll('.year-title.collapsible');
+    yearTitles.forEach(title => {
+        title.addEventListener('click', () => {
+            const year = title.getAttribute('data-year');
+            const content = document.querySelector(`.year-content[data-year-content="${year}"]`);
+            const icon = title.querySelector('.toggle-icon');
+            
+            if (content) {
+                content.classList.toggle('collapsed');
+                title.classList.toggle('collapsed');
+                if (icon) {
+                    icon.textContent = content.classList.contains('collapsed') ? '+' : '−';
+                }
+            }
+        });
+    });
+    
+    // Gallery Item Click - Preserve existing URL params
+    const items = document.querySelectorAll('.g-item');
+    items.forEach(item => {
+        item.addEventListener('click', (e) => {
+            const id = item.getAttribute('data-id');
+            
+            // Update URL preserving lang param
+            const url = new URL(window.location.href);
+            url.searchParams.set('image', id);
+            window.history.pushState({ imageId: id }, '', url);
+    
+            const thumbImg = item.querySelector('img');
+            const thumbSrc = thumbImg ? thumbImg.currentSrc : null;
+    
+            window.dispatchEvent(new CustomEvent('openLightbox', {
+                detail: { id, thumbSrc }
+            }));
+        });
+    });
+</script>

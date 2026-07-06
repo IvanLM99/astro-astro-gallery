@@ -1,0 +1,180 @@
+---
+import '../styles/global.css';
+import { getImage } from 'astro:assets';
+import eclipseImg from '../assets/EclipseUs.jpg';
+import Particles from '../components/Particles.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+	title: string;
+    lang?: string; 
+}
+
+const { title, lang = 'es' } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const optimizedSocialImg = await getImage({ src: eclipseImg, format: 'webp', width: 1200 });
+const socialImageURL = new URL(optimizedSocialImg.src, Astro.url);
+---
+
+<!DOCTYPE html>
+<html lang={lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		<meta name="generator" content={Astro.generator} />
+
+        <!-- === SEO & META === -->
+		<meta name="description" content="Astrophotography gallery and professional portfolio by Iván López. Exploring the cosmos through photography and data." />
+        <meta name="keywords" content="Astrophotography, Data Scientist, Deep Sky, Portfolio, Iván López, Astronomy, Spain, Mallorca">
+        <meta name="author" content="Iván López">
+
+        <!-- Open Graph / Facebook / LinkedIn -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content={canonicalURL}>
+        <meta property="og:title" content={title}>
+        <meta property="og:description" content="Capturing the invisible. Astrophotography gallery & Professional Portfolio.">
+        <meta property="og:image" content={socialImageURL}> 
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:title" content={title}>
+        <meta property="twitter:description" content="Capturing the invisible. Astrophotography gallery & Professional Portfolio.">
+        <meta property="twitter:image" content={socialImageURL}>
+
+        <!-- === STRUCTURED DATA (JSON-LD) === -->
+        <script type="application/ld+json" is:inline>
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": "Iván López",
+          "url": "https://ivanlm99.github.io/",
+          "sameAs": [
+            "https://linkedin.com/in/lmivan",
+            "https://github.com/IvanLM99"
+          ],
+          "jobTitle": "AI Engineer & Astrophotographer",
+          "knowsAbout": ["Astrophotography", "Artificial Intelligence", "Data Science"]
+        }
+        </script>
+        
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        
+		<title>{title}</title>
+	</head>
+	<body>
+        <!-- 0. BACKGROUND -->
+        <Particles />
+
+        <!-- 1. LOADER -->
+        <div id="loader-overlay">
+            <div class="accretion-disk"></div>
+        </div>
+
+        <!-- FIX: Script to handle loader logic only once per session -->
+        <script is:inline>
+            (function() {
+                const loader = document.getElementById('loader-overlay');
+                if (sessionStorage.getItem('cosmos_intro_shown')) {
+                    // If visited before, hide immediately without animation
+                    if(loader) {
+                        loader.style.display = 'none';
+                        loader.style.animation = 'none';
+                    }
+                } else {
+                    // First visit: Set flag so it doesn't show again
+                    sessionStorage.setItem('cosmos_intro_shown', 'true');
+                }
+            })();
+        </script>
+
+		<slot />
+
+        <!-- Scroll Top -->
+        <button id="scroll-top-btn" aria-label="Scroll to top">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+
+        <Footer lang={lang} />
+        
+        <script>
+            // Scroll to top logic
+            const scrollTopBtn = document.getElementById('scroll-top-btn');
+            if(scrollTopBtn) {
+                scrollTopBtn.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Scroll Reveals
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+
+            // Need to re-query and observe when new content comes in or on load
+            const initReveals = () => {
+                document.querySelectorAll('.reveal:not(.active)').forEach(el => revealObserver.observe(el));
+            };
+            
+            // Run on initial load
+            initReveals();
+            
+            // Run if language changes and DOM might be rebuilt
+            window.addEventListener('langChange', () => {
+                setTimeout(initReveals, 100);
+            });
+        </script>
+
+		<script>
+		    // Ensure particles don't reinitialize on navigation (if using View Transitions)
+		    // or when tabs switch
+		    window.addEventListener('load', () => {
+		        // Particles are canvas-based and should persist in Layout
+		        // This ensures no duplicate canvas elements
+		        const canvases = document.querySelectorAll('#bg-canvas');
+		        if (canvases.length > 1) {
+		            for (let i = 1; i < canvases.length; i++) {
+		                canvases[i].remove();
+		            }
+		        }
+		    });
+
+            // Parallax Effects
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        const scrollY = window.scrollY;
+                        const isMobile = window.innerWidth <= 768;
+
+                        // Quote Parallax
+                        const quoteContainer = document.querySelector('.quote-container') as HTMLElement;
+                        if (quoteContainer && !isMobile) {
+                            quoteContainer.style.transform = `translateY(${scrollY * 0.2}px)`;
+                            quoteContainer.style.opacity = Math.max(0, 1 - (scrollY / 300)).toString();
+                        }
+
+                        // Subtle Canvas Background Parallax
+                        const canvas = document.getElementById('bg-canvas') as HTMLElement;
+                        if (canvas && !isMobile) {
+                            canvas.style.transform = `translateY(${scrollY * 0.05}px)`;
+                        }
+
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, {passive: true});
+		</script>
+	</body>
+</html>
