@@ -63,6 +63,26 @@ const { lang = 'es' } = Astro.props;
         }
     }
 
+    function updateTransform(imgElement) {
+        if (scale <= 1) {
+            scale = 1;
+            pointX = 0;
+            pointY = 0;
+        } else {
+            const w = imgElement.offsetWidth;
+            const h = imgElement.offsetHeight;
+            const minX = w * (1 - scale);
+            const minY = h * (1 - scale);
+            
+            if (pointX > 0) pointX = 0;
+            if (pointX < minX) pointX = minX;
+            
+            if (pointY > 0) pointY = 0;
+            if (pointY < minY) pointY = minY;
+        }
+        imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }
+
     function setupZoom(imgElement) {
         activeZoomImage = imgElement;
         
@@ -98,7 +118,7 @@ const { lang = 'es' } = Astro.props;
                 pointY = clientY - ratio * (clientY - pointY);
             }
 
-            imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+            updateTransform(imgElement);
         }, { passive: false });
 
         // --- Mouse Pan ---
@@ -116,12 +136,12 @@ const { lang = 'es' } = Astro.props;
             e.preventDefault();
             pointX = e.clientX - start.x;
             pointY = e.clientY - start.y;
-            imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+            updateTransform(imgElement);
         });
 
         window.addEventListener('mouseup', () => {
             panning = false;
-            if (imgElement) imgElement.style.cursor = scale > 1 ? 'grab' : 'default';
+            if (imgElement) imgElement.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
         });
 
         // --- Touch Pinch & Pan ---
@@ -164,13 +184,13 @@ const { lang = 'es' } = Astro.props;
                     if (scale === 1) {
                         pointX = 0; pointY = 0;
                     }
-                    imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                    updateTransform(imgElement);
                 }
             } else if (e.touches.length === 1 && panning && scale > 1) {
                 e.preventDefault(); // Prevent scroll while panning
                 pointX = e.touches[0].clientX - start.x;
                 pointY = e.touches[0].clientY - start.y;
-                imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                updateTransform(imgElement);
             }
         }, { passive: false });
 
@@ -211,7 +231,7 @@ const { lang = 'es' } = Astro.props;
                     pointY = ys * (1 - scale);
                     
                     imgElement.style.transition = 'transform 0.3s ease';
-                    imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+                    updateTransform(imgElement);
                     imgElement.style.cursor = 'grab';
                     
                     setTimeout(() => { imgElement.style.transition = 'none'; }, 300);
@@ -262,8 +282,7 @@ const { lang = 'es' } = Astro.props;
                         
                         ${story ? `
                         <div class="lb-slide-story">
-                            <i class="fas fa-quote-left story-icon"></i>
-                            <p>${story}</p>
+                            <p class="story-text">“${story}”</p>
                         </div>
                         ` : ''}
                         
