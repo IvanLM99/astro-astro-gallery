@@ -20,7 +20,7 @@
         let isPaused = false;
 
         const isMobile = window.innerWidth <= 768;
-        const particleCount = isMobile ? 30 : 175;
+        const particleCount = isMobile ? 80 : 175;
 
         let mouse = { x: -1000, y: -1000 };
         let mouseActive = false;
@@ -41,6 +41,24 @@
             mouse.y = e.clientY - (window.scrollY * 0.05);
             mouseActive = true;
             clearTimeout(mouseTimer);
+            mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
+        });
+
+        window.addEventListener('touchstart', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+            mouseActive = true;
+            clearTimeout(mouseTimer);
+        }, {passive: true});
+
+        window.addEventListener('touchmove', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+            mouseActive = true;
+            clearTimeout(mouseTimer);
+        }, {passive: true});
+
+        window.addEventListener('touchend', () => {
             mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
         });
 
@@ -68,7 +86,7 @@
             update() {
                 if (isPaused) return;
                 
-                if (mouseActive && !isMobile) {
+                if (mouseActive) {
                     const dx = mouse.x - this.x;
                     const dy = mouse.y - this.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
