@@ -81,7 +81,7 @@ const { lang = 'es' } = Astro.props;
             // Compute current scale and the new scale
             const oldScale = scale;
             const delta = -e.deltaY;
-            (delta > 0) ? (scale *= 1.2) : (scale /= 1.2);
+            (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
             
             // Limit scale
             if (scale < 1) scale = 1;
@@ -127,8 +127,14 @@ const { lang = 'es' } = Astro.props;
         // --- Touch Pinch & Pan ---
         let initialDistance = null;
         let initialScale = 1;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
 
         imgElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            }
             if (e.touches.length === 2) {
                 e.preventDefault();
                 const dist = Math.hypot(
@@ -190,11 +196,19 @@ const { lang = 'es' } = Astro.props;
                 } else {
                     scale = 2.5;
                     const rect = imgElement.getBoundingClientRect();
-                    const xs = (e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width/2) - rect.left;
-                    const ys = (e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height/2) - rect.top;
+                    let cx = e.clientX;
+                    let cy = e.clientY;
+                    // Fallback to lastTouch if clientX/Y are 0 (can happen on some mobile browsers synthetic clicks)
+                    if (!cx && !cy && lastTouchX) {
+                        cx = lastTouchX;
+                        cy = lastTouchY;
+                    }
+                    // If still fallback, use center
+                    const xs = (cx || rect.left + rect.width/2) - rect.left;
+                    const ys = (cy || rect.top + rect.height/2) - rect.top;
                     
-                    pointX = -xs * (scale - 1);
-                    pointY = -ys * (scale - 1);
+                    pointX = xs * (1 - scale);
+                    pointY = ys * (1 - scale);
                     
                     imgElement.style.transition = 'transform 0.3s ease';
                     imgElement.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
@@ -272,7 +286,7 @@ const { lang = 'es' } = Astro.props;
                         </div>
                         
                         <div class="lb-slide-tags">
-                            <span class="lb-category-tag">${item.category}</span>
+                            <span class="lb-category-tag">${t['cat_' + item.category] || item.category}</span>
                         </div>
                     </div>
                 </div>
@@ -456,29 +470,6 @@ const { lang = 'es' } = Astro.props;
                 break;
         }
     });
-    
-    // Touch/swipe handling
-    let touchStartY = 0;
-    
-    lbFeed?.addEventListener('touchstart', (e) => {
-        if (scale > 1) return; // Disable swipe to change image if zoomed in
-        touchStartY = e.changedTouches[0].screenY;
-    }, {passive: true});
-    
-    lbFeed?.addEventListener('touchend', (e) => {
-        if (scale > 1) return; // Disable swipe to change image if zoomed in
-        const touchEndY = e.changedTouches[0].screenY;
-        const diff = touchStartY - touchEndY;
-        const threshold = 100; // Increased threshold
-        
-        if (Math.abs(diff) > threshold) {
-            if (diff > 0) {
-                scrollToIndex(currentIndex + 1);
-            } else {
-                scrollToIndex(currentIndex - 1);
-            }
-        }
-    }, {passive: true});
     
     // Language change - rebuild feed with new language
     window.addEventListener('langChange', (e) => {
