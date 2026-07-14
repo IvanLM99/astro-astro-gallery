@@ -311,6 +311,19 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     const items = document.querySelectorAll('.g-item');
     items.forEach(item => {
         item.addEventListener('click', (e) => {
+            const isMobileDevice = window.matchMedia('(max-width: 768px)').matches;
+            
+            if (isMobileDevice) {
+                // First tap shows hover, second tap opens lightbox
+                if (!item.classList.contains('mobile-hovered')) {
+                    document.querySelectorAll('.g-item.mobile-hovered').forEach(el => {
+                        if (el !== item) el.classList.remove('mobile-hovered');
+                    });
+                    item.classList.add('mobile-hovered');
+                    return; // Stop execution here
+                }
+            }
+
             const id = item.getAttribute('data-id');
             
             // Update URL preserving lang param
@@ -325,5 +338,17 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
                 detail: { id, thumbSrc }
             }));
         });
+    });
+
+    // Dismiss hover on outside click for mobile
+    document.addEventListener('click', (e) => {
+        const isMobileDevice = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobileDevice) {
+            if (!e.target.closest('.g-item')) {
+                document.querySelectorAll('.g-item.mobile-hovered').forEach(el => {
+                    el.classList.remove('mobile-hovered');
+                });
+            }
+        }
     });
 </script>
