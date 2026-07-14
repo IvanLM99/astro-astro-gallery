@@ -45,17 +45,21 @@
         });
 
         window.addEventListener('touchstart', (e) => {
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
-            mouseActive = true;
-            clearTimeout(mouseTimer);
+            if (e.touches.length > 0) {
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+                mouseActive = true;
+                clearTimeout(mouseTimer);
+            }
         }, {passive: true});
 
         window.addEventListener('touchmove', (e) => {
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
-            mouseActive = true;
-            clearTimeout(mouseTimer);
+            if (e.touches.length > 0) {
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+                mouseActive = true;
+                clearTimeout(mouseTimer);
+            }
         }, {passive: true});
 
         window.addEventListener('touchend', () => {

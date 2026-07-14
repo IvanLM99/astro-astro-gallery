@@ -178,11 +178,20 @@ const { lang = 'es' } = Astro.props;
                 );
                 
                 if (initialDistance) {
+                    const oldScale = scale;
                     const newScale = initialScale * (dist / initialDistance);
                     scale = Math.max(1, Math.min(newScale, 5));
                     
                     if (scale === 1) {
                         pointX = 0; pointY = 0;
+                    } else if (scale !== oldScale) {
+                        const rect = imgElement.getBoundingClientRect();
+                        const clientX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+                        const clientY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+                        
+                        const ratio = scale / oldScale;
+                        pointX = clientX - ratio * (clientX - pointX);
+                        pointY = clientY - ratio * (clientY - pointY);
                     }
                     updateTransform(imgElement);
                 }
