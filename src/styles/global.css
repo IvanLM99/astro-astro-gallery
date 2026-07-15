@@ -432,7 +432,6 @@ html[lang="es"] .title-en { display: none; }
     
     .overlay-title {
         font-size: 0.95rem;
-        text-transform: lowercase;
         white-space: normal;
         overflow-wrap: break-word;
         line-height: 1.2;
@@ -665,6 +664,11 @@ body.no-scroll {
     position: relative;
     max-width: 100%;
     max-height: 70vh;
+    min-width: 100px;
+    min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
     border-radius: 4px;
 }
