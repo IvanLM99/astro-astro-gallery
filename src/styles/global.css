@@ -12,7 +12,7 @@
 
 body {
     background-color: var(--bg-color);
-    background-image: radial-gradient(circle at 50% 15%, #060913 0%, var(--bg-color) 80%);
+    background-image: radial-gradient(circle at 50% 15%, #050608 0%, var(--bg-color) 80%);
     background-attachment: fixed;
     color: var(--text-main);
     font-family: var(--font-sans);
@@ -356,10 +356,11 @@ html[lang="es"] .title-en { display: none; }
     .nav-center { width: 100%; justify-content: center; }
     .menu-btn { font-size: 0.8rem; margin: 0; }
     .nav-right { 
-        position: absolute; 
-        top: 15px; 
-        right: 20px; 
-        margin-top: 0; 
+        position: static; 
+        margin-top: 0;
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
     .content-container { padding: 20px 15px; }
     
@@ -428,6 +429,21 @@ html[lang="es"] .title-en { display: none; }
     .lb-story { font-size: 1rem; }
     .lb-nav-btn { display: none !important; } /* Hide ugly arrows on mobile */
     .close-lb { top: 15px; right: 20px; font-size: 2.2rem; }
+    
+    .overlay-title {
+        font-size: 0.95rem;
+        text-transform: lowercase;
+        white-space: normal;
+        overflow-wrap: break-word;
+        line-height: 1.2;
+    }
+    
+    .contact-quote {
+        font-size: 1.2rem;
+        text-wrap: balance;
+        padding: 0 15px;
+        line-height: 1.4;
+    }
 }
 
 /* Collapsible Year Sections */
