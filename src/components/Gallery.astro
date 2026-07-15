@@ -137,39 +137,49 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
     // Quote Logic - No transition on language change, only on quote rotation
     const quotes = [
-        { text_en: "\"We are made of starstuff.\"", text_es: "\"Estamos hechos de polvo de estrellas.\"", author: "- Carl Sagan" },
-        { text_en: "\"Somewhere, something incredible is waiting to be known.\"", text_es: "\"En algún lugar, algo increíble espera ser descubierto.\"", author: "- Carl Sagan" },
-        { text_en: "\"Astronomy compels the soul to look upwards and leads us from this world to another.\"", text_es: "\"La astronomía obliga al alma a mirar hacia arriba y nos lleva de este mundo a otro.\"", author: "- Plato" },
-        { text_en: "\"I am not an Athenian or a Greek, but a citizen of the world.\"", text_es: "\"No soy ateniense ni griego, sino ciudadano del mundo.\"", author: "- Socrates" },
-        { text_en: "\"Wonder is the beginning of wisdom.\"", text_es: "\"El asombro es el comienzo de la sabiduría.\"", author: "- Socrates" },
-        { text_en: "\"In all things of nature there is something of the marvelous.\"", text_es: "\"En todas las cosas de la naturaleza hay algo de maravilloso.\"", author: "- Aristotle" },
-        { text_en: "\"All men by nature desire to know.\"", text_es: "\"Todos los hombres desean por naturaleza saber.\"", author: "- Aristotle" },
-        { text_en: "\"Dwell on the beauty of life. Watch the stars, and see yourself running with them.\"", text_es: "\"Detente en la belleza de la vida. Mira las estrellas y vete corriendo con ellas.\"", author: "- Marcus Aurelius" },
-        { text_en: "\"Reserve your right to think, for even to think wrongly is better than not to think at all.\"", text_es: "\"Conserva tu derecho a pensar, porque incluso pensar erróneamente es mejor que no pensar en absoluto.\"", author: "- Hypatia of Alexandria" },
-        { text_en: "\"To know that we know what we know, and to know that we do not know what we do not know, that is true knowledge.\"", text_es: "\"Saber que sabemos lo que sabemos, y saber que no sabemos lo que no sabemos, ese es el verdadero conocimiento.\"", author: "- Nicolaus Copernicus" },
-        { text_en: "\"The sun, with all those planets revolving around it and dependent on it, can still ripen a bunch of grapes as if it had nothing else in the universe to do.\"", text_es: "\"El sol, con todos esos planetas girando a su alrededor y dependiendo de él, todavía puede madurar un racimo de uvas como si no tuviera nada más que hacer en el universo.\"", author: "- Galileo Galilei" },
-        { text_en: "\"Mathematics is the language with which the universe was written.\"", text_es: "\"Las matemáticas son el lenguaje con el que se escribió el universo.\"", author: "- Galileo Galilei" },
-        { text_en: "\"The treasures of the built-in secrets of the universe are not to be found in a single field.\"", text_es: "\"Los tesoros de los secretos ocultos del universo no se encuentran en un solo campo.\"", author: "- Johannes Kepler" },
-        { text_en: "\"I seem to have been only like a boy playing on the seashore... whilst the great ocean of truth lay all undiscovered before me.\"", text_es: "\"Parezco haber sido solo como un niño jugando en la orilla del mar... mientras el gran océano de la verdad yacía todo sin descubrir ante mí.\"", author: "- Isaac Newton" },
-        { text_en: "\"If I have seen further it is by standing on the shoulders of Giants.\"", text_es: "\"Si he visto más lejos es poniéndome sobre los hombros de Gigantes.\"", author: "- Isaac Newton" },
-        { text_en: "\"Equipped with his five senses, man explores the universe around him and calls the adventure Science.\"", text_es: "\"Equipado con sus cinco sentidos, el hombre explora el universo que lo rodea y llama a la aventura Ciencia.\"", author: "- Edwin Hubble" },
-        { text_en: "\"The most beautiful thing we can experience is the mysterious. It is the source of all true art and science.\"", text_es: "\"Lo más hermoso que podemos experimentar es lo misterioso. Es la fuente de todo arte y ciencia verdaderos.\"", author: "- Albert Einstein" },
-        { text_en: "\"Imagination is more important than knowledge. Knowledge is limited. Imagination encircles the world.\"", text_es: "\"La imaginación es más importante que el conocimiento. El conocimiento es limitado. La imaginación rodea al mundo.\"", author: "- Albert Einstein" },
-        { text_en: "\"Look deep into nature, and then you will understand everything better.\"", text_es: "\"Mira profundamente en la naturaleza y entonces entenderás todo mejor.\"", author: "- Albert Einstein" },
-        { text_en: "\"The important thing is not to stop questioning. Curiosity has its own reason for existence.\"", text_es: "\"Lo importante es no dejar de hacerse preguntas. La curiosidad tiene su propia razón de ser.\"", author: "- Albert Einstein" },
-        { text_en: "\"Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.\"", text_es: "\"Nada en la vida es para ser temido, es sólo para ser comprendido. Ahora es el momento de entender más, para que podamos temer menos.\"", author: "- Marie Curie" },
-        { text_en: "\"I'd rather have questions that can't be answered than answers that can't be questioned.\"", text_es: "\"Prefiero tener preguntas que no pueden ser respondidas que respuestas que no pueden ser cuestionadas.\"", author: "- Richard Feynman" },
-        { text_en: "\"Nature uses only the longest threads to weave her patterns, so that each small piece of her fabric reveals the organization of the entire tapestry.\"", text_es: "\"La naturaleza usa solo los hilos más largos para tejer sus patrones, de modo que cada pequeña pieza de su tela revela la organización de todo el tapiz.\"", author: "- Richard Feynman" },
-        { text_en: "\"Remember to look up at the stars and not down at your feet. Be curious.\"", text_es: "\"Recuerda mirar hacia arriba a las estrellas y no hacia abajo a tus pies. Sé curioso.\"", author: "- Stephen Hawking" },
-        { text_en: "\"The universe does not allow perfection.\"", text_es: "\"El universo no permite la perfection.\"", author: "- Stephen Hawking" },
-        { text_en: "\"We are just an advanced breed of monkeys on a minor planet of a very average star. But we can understand the Universe. That makes us something very special.\"", text_es: "\"Solo somos una raza avanzada de monos en un planeta menor de una estrella muy promedio. Pero podemos entender el Universo. Eso nos hace algo muy especial.\"", author: "- Stephen Hawking" },
-        { text_en: "\"When you change the way you look at things, the things you look at change.\"", text_es: "\"Cuando cambias la forma en que miras las cosas, las cosas que miras cambian.\"", author: "- Max Planck" },
-        { text_en: "\"The cosmos is within us. We are made of star-stuff. We are a way for the cosmos to know itself.\"", text_es: "\"El cosmos está dentro de nosotros. Estamos hechos de material estelar. Somos una forma de que el cosmos se conozca a sí mismo.\"", author: "- Carl Sagan" },
-        { text_en: "\"For small creatures such as we the vastness is bearable only through love.\"", text_es: "\"Para criaturas pequeñas como nosotros, la inmensidad es soportable solo a través del amor.\"", author: "- Carl Sagan" },
-        { text_en: "\"The universe is under no obligation to make sense to you.\"", text_es: "\"El universo no tiene la obligación de tener sentido para ti.\"", author: "- Neil deGrasse Tyson" },
-        { text_en: "\"We are biologically connected to everything in the world and atomically connected to all atoms in the universe. We are not figuratively, but literally stardust.\"", text_es: "\"Estamos conectados biológicamente con todo en el mundo y atómicamente conectados con todos los átomos del universo. No somos figurativamente, sino literalmente polvo de estrellas.\"", author: "- Neil deGrasse Tyson" },
-        { text_en: "\"The story of the universe is our story. We are the cosmos made conscious.\"", text_es: "\"La historia del universo es nuestra historia. Somos el cosmos hecho consciente.\"", author: "- Brian Cox" },
-        { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author: "- Michio Kaku" }
+        { text_en: "\"We are the universe experiencing itself.\"", text_es: "\"Somos el universo experimentándose a sí mismo.\"", author_en: "- Alan Watts", author_es: "- Alan Watts" },
+        { text_en: "\"Two possibilities exist: either we are alone in the Universe or we are not. Both are equally terrifying.\"", text_es: "\"Existen dos posibilidades: o estamos solos en el universo o no lo estamos. Ambas son igual de aterradoras.\"", author_en: "- Arthur C. Clarke", author_es: "- Arthur C. Clarke" },
+        { text_en: "\"The history of astronomy is a history of receding horizons.\"", text_es: "\"La historia de la astronomía es una historia de horizontes que retroceden.\"", author_en: "- Edwin Hubble", author_es: "- Edwin Hubble" },
+        { text_en: "\"We are made of starstuff.\"", text_es: "\"Estamos hechos de polvo de estrellas.\"", author_en: "- Carl Sagan", author_es: "- Carl Sagan" },
+        { text_en: "\"Somewhere, something incredible is waiting to be known.\"", text_es: "\"En algún lugar, algo increíble espera ser descubierto.\"", author_en: "- Carl Sagan", author_es: "- Carl Sagan" },
+        { text_en: "\"Imagination will often carry us to worlds that never were, but without it we go nowhere.\"", text_es: "\"La imaginación a menudo nos llevará a mundos que nunca existieron, pero sin ella no vamos a ninguna parte.\"", author_en: "- Carl Sagan", author_es: "- Carl Sagan" },
+        { text_en: "\"Astronomy compels the soul to look upwards and leads us from this world to another.\"", text_es: "\"La astronomía obliga al alma a mirar hacia arriba y nos lleva de este mundo a otro.\"", author_en: "- Plato", author_es: "- Platón" },
+        { text_en: "\"I am not an Athenian or a Greek, but a citizen of the world.\"", text_es: "\"No soy ateniense ni griego, sino ciudadano del mundo.\"", author_en: "- Socrates", author_es: "- Sócrates" },
+        { text_en: "\"Wonder is the beginning of wisdom.\"", text_es: "\"El asombro es el comienzo de la sabiduría.\"", author_en: "- Socrates", author_es: "- Sócrates" },
+        { text_en: "\"In all things of nature there is something of the marvelous.\"", text_es: "\"En todas las cosas de la naturaleza hay algo de maravilloso.\"", author_en: "- Aristotle", author_es: "- Aristóteles" },
+        { text_en: "\"All men by nature desire to know.\"", text_es: "\"Todos los hombres desean por naturaleza saber.\"", author_en: "- Aristotle", author_es: "- Aristóteles" },
+        { text_en: "\"Nothing exists except atoms and empty space; everything else is opinion.\"", text_es: "\"Nada existe excepto átomos y espacio vacío; todo lo demás es opinión.\"", author_en: "- Democritus", author_es: "- Demócrito" },
+        { text_en: "\"Nothing can be created out of nothing.\"", text_es: "\"Nada puede ser creado de la nada.\"", author_en: "- Lucretius", author_es: "- Lucrecio" },
+        { text_en: "\"Dwell on the beauty of life. Watch the stars, and see yourself running with them.\"", text_es: "\"Detente en la belleza de la vida. Mira las estrellas y vete corriendo con ellas.\"", author_en: "- Marcus Aurelius", author_es: "- Marco Aurelio" },
+        { text_en: "\"Look back over the past, with its changing empires that rose and fell, and you can foresee the future, too.\"", text_es: "\"Mira hacia atrás en el pasado, con sus imperios cambiantes que se alzaron y cayeron, y también podrás prever el futuro.\"", author_en: "- Marcus Aurelius", author_es: "- Marco Aurelio" },
+        { text_en: "\"Reserve your right to think, for even to think wrongly is better than not to think at all.\"", text_es: "\"Conserva tu derecho a pensar, porque incluso pensar erróneamente es mejor que no pensar en absoluto.\"", author_en: "- Hypatia of Alexandria", author_es: "- Hipatia de Alejandría" },
+        { text_en: "\"To know that we know what we know, and to know that we do not know what we do not know, that is true knowledge.\"", text_es: "\"Saber que sabemos lo que sabemos, y saber que no sabemos lo que no sabemos, ese es el verdadero conocimiento.\"", author_en: "- Nicolaus Copernicus", author_es: "- Nicolás Copérnico" },
+        { text_en: "\"The sun, with all those planets revolving around it and dependent on it, can still ripen a bunch of grapes as if it had nothing else in the universe to do.\"", text_es: "\"El sol, con todos esos planetas girando a su alrededor y dependiendo de él, todavía puede madurar un racimo de uvas como si no tuviera nada más que hacer en el universo.\"", author_en: "- Galileo Galilei", author_es: "- Galileo Galilei" },
+        { text_en: "\"Mathematics is the language with which the universe was written.\"", text_es: "\"Las matemáticas son el lenguaje con el que se escribió el universo.\"", author_en: "- Galileo Galilei", author_es: "- Galileo Galilei" },
+        { text_en: "\"The treasures of the built-in secrets of the universe are not to be found in a single field.\"", text_es: "\"Los tesoros de los secretos ocultos del universo no se encuentran en un solo campo.\"", author_en: "- Johannes Kepler", author_es: "- Johannes Kepler" },
+        { text_en: "\"I seem to have been only like a boy playing on the seashore... whilst the great ocean of truth lay all undiscovered before me.\"", text_es: "\"Parezco haber sido solo como un niño jugando en la orilla del mar... mientras el gran océano de la verdad yacía todo sin descubrir ante mí.\"", author_en: "- Isaac Newton", author_es: "- Isaac Newton" },
+        { text_en: "\"If I have seen further it is by standing on the shoulders of Giants.\"", text_es: "\"Si he visto más lejos es poniéndome sobre los hombros de Gigantes.\"", author_en: "- Isaac Newton", author_es: "- Isaac Newton" },
+        { text_en: "\"Equipped with his five senses, man explores the universe around him and calls the adventure Science.\"", text_es: "\"Equipado con sus cinco sentidos, el hombre explora el universo que lo rodea y llama a la aventura Ciencia.\"", author_en: "- Edwin Hubble", author_es: "- Edwin Hubble" },
+        { text_en: "\"The most beautiful thing we can experience is the mysterious. It is the source of all true art and science.\"", text_es: "\"Lo más hermoso que podemos experimentar es lo misterioso. Es la fuente de todo arte y ciencia verdaderos.\"", author_en: "- Albert Einstein", author_es: "- Albert Einstein" },
+        { text_en: "\"Imagination is more important than knowledge. Knowledge is limited. Imagination encircles the world.\"", text_es: "\"La imaginación es más importante que el conocimiento. El conocimiento es limitado. La imaginación rodea al mundo.\"", author_en: "- Albert Einstein", author_es: "- Albert Einstein" },
+        { text_en: "\"Look deep into nature, and then you will understand everything better.\"", text_es: "\"Mira profundamente en la naturaleza y entonces entenderás todo mejor.\"", author_en: "- Albert Einstein", author_es: "- Albert Einstein" },
+        { text_en: "\"The important thing is not to stop questioning. Curiosity has its own reason for existence.\"", text_es: "\"Lo importante es no dejar de hacerse preguntas. La curiosidad tiene su propia razón de ser.\"", author_en: "- Albert Einstein", author_es: "- Albert Einstein" },
+        { text_en: "\"Nothing in life is to be feared, it is only to be understood. Now is the time to understand more, so that we may fear less.\"", text_es: "\"Nada en la vida es para ser temido, es sólo para ser comprendido. Ahora es el momento de entender más, para que podamos temer menos.\"", author_en: "- Marie Curie", author_es: "- Marie Curie" },
+        { text_en: "\"I'd rather have questions that can't be answered than answers that can't be questioned.\"", text_es: "\"Prefiero tener preguntas que no pueden ser respondidas que respuestas que no pueden ser cuestionadas.\"", author_en: "- Richard Feynman", author_es: "- Richard Feynman" },
+        { text_en: "\"Nature uses only the longest threads to weave her patterns, so that each small piece of her fabric reveals the organization of the entire tapestry.\"", text_es: "\"La naturaleza usa solo los hilos más largos para tejer sus patrones, de modo que cada pequeña pieza de su tela revela la organización de todo el tapiz.\"", author_en: "- Richard Feynman", author_es: "- Richard Feynman" },
+        { text_en: "\"Remember to look up at the stars and not down at your feet. Be curious.\"", text_es: "\"Recuerda mirar hacia arriba a las estrellas y no hacia abajo a tus pies. Sé curioso.\"", author_en: "- Stephen Hawking", author_es: "- Stephen Hawking" },
+        { text_en: "\"The universe does not allow perfection.\"", text_es: "\"El universo no permite la perfección.\"", author_en: "- Stephen Hawking", author_es: "- Stephen Hawking" },
+        { text_en: "\"We are just an advanced breed of monkeys on a minor planet of a very average star. But we can understand the Universe. That makes us something very special.\"", text_es: "\"Solo somos una raza avanzada de monos en un planeta menor de una estrella muy promedio. Pero podemos entender el Universo. Eso nos hace algo muy especial.\"", author_en: "- Stephen Hawking", author_es: "- Stephen Hawking" },
+        { text_en: "\"When you change the way you look at things, the things you look at change.\"", text_es: "\"Cuando cambias la forma en que miras las cosas, las cosas que miras cambian.\"", author_en: "- Max Planck", author_es: "- Max Planck" },
+        { text_en: "\"The cosmos is within us. We are made of star-stuff. We are a way for the cosmos to know itself.\"", text_es: "\"El cosmos está dentro de nosotros. Estamos hechos de material estelar. Somos una forma de que el cosmos se conozca a sí mismo.\"", author_en: "- Carl Sagan", author_es: "- Carl Sagan" },
+        { text_en: "\"For small creatures such as we the vastness is bearable only through love.\"", text_es: "\"Para criaturas pequeñas como nosotros, la inmensidad es soportable solo a través del amor.\"", author_en: "- Carl Sagan", author_es: "- Carl Sagan" },
+        { text_en: "\"The universe is under no obligation to make sense to you.\"", text_es: "\"El universo no tiene la obligación de tener sentido para ti.\"", author_en: "- Neil deGrasse Tyson", author_es: "- Neil deGrasse Tyson" },
+        { text_en: "\"We are biologically connected to everything in the world and atomically connected to all atoms in the universe. We are not figuratively, but literally stardust.\"", text_es: "\"Estamos conectados biológicamente con todo en el mundo y atómicamente conectados con todos los átomos del universo. No somos figurativamente, sino literalmente polvo de estrellas.\"", author_en: "- Neil deGrasse Tyson", author_es: "- Neil deGrasse Tyson" },
+        { text_en: "\"The story of the universe is our story. We are the cosmos made conscious.\"", text_es: "\"La historia del universo es nuestra historia. Somos el cosmos hecho consciente.\"", author_en: "- Brian Cox", author_es: "- Brian Cox" },
+        { text_en: "\"To understand the universe, you must understand the language of the stars.\"", text_es: "\"Para entender el universo, debes entender el lenguaje de las estrellas.\"", author_en: "- Michio Kaku", author_es: "- Michio Kaku" },
+        { text_en: "\"The future is uncertain... but this uncertainty is at the very heart of human creativity.\"", text_es: "\"El futuro es incierto... pero esta incertidumbre está en el corazón mismo de la creatividad humana.\"", author_en: "- Ilya Prigogine", author_es: "- Ilya Prigogine" },
+        { text_en: "\"Everything we call real is made of things that cannot be regarded as real.\"", text_es: "\"Todo lo que llamamos real está hecho de cosas que no pueden considerarse reales.\"", author_en: "- Werner Heisenberg", author_es: "- Werner Heisenberg" },
+        { text_en: "\"Not only is the Universe stranger than we think, it is stranger than we can think.\"", text_es: "\"El Universo no sólo es más extraño de lo que pensamos, es más extraño de lo que podemos pensar.\"", author_en: "- Erwin Schrödinger", author_es: "- Erwin Schrödinger" }
     ];
 
 
@@ -202,13 +212,14 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
         if(!quoteTextEl || !quoteAuthEl) return;
         const q = quoteQueue[currentQuoteIndex];
         const text = currentLang === 'en' ? q.text_en : q.text_es;
+        const author = currentLang === 'en' ? q.author_en : q.author_es;
         
         if (skipTransition) {
             // Instant update for language change - no transition
             quoteTextEl.style.transition = 'none';
             quoteAuthEl.style.transition = 'none';
             quoteTextEl.textContent = text;
-            quoteAuthEl.textContent = q.author;
+            quoteAuthEl.textContent = author;
             quoteTextEl.classList.add('visible');
             quoteAuthEl.classList.add('visible');
             
@@ -226,7 +237,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
             
             setTimeout(() => {
                 quoteTextEl.textContent = text;
-                quoteAuthEl.textContent = q.author;
+                quoteAuthEl.textContent = author;
                 quoteTextEl.classList.add('visible');
                 quoteAuthEl.classList.add('visible');
             }, fadeTime);
@@ -244,7 +255,8 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     // Initialize
     initQuoteQueue();
     quoteTextEl.textContent = currentLang === 'en' ? quoteQueue[0].text_en : quoteQueue[0].text_es;
-    quoteAuthEl.textContent = quoteQueue[0].author;
+    quoteAuthEl.textContent = currentLang === 'en' ? quoteQueue[0].author_en : quoteQueue[0].author_es;
+
     
     setTimeout(() => {
         if(quoteTextEl) quoteTextEl.classList.add('visible');
