@@ -274,12 +274,12 @@ const { lang = 'es' } = Astro.props;
                 <div class="lb-slide-content">
                     <div class="lb-image-section">
                         <div class="lb-image-wrapper">
-                            <img class="lb-slide-img zoomable-img" 
-                                 src="${item.thumbnailSrc || item.src}" 
+                            <img class="lb-slide-img zoomable-img loaded" 
+                                 src="${item.src}" 
                                  data-full="${item.src}"
                                  alt="${title}" 
                                  loading="${Math.abs(index - startIndex) <= 1 ? 'eager' : 'lazy'}">
-                            <div class="lb-loading-skeleton"></div>
+                            <div class="lb-loading-skeleton" style="display: none;"></div>
                         </div>
                     </div>
                     
@@ -320,18 +320,7 @@ const { lang = 'es' } = Astro.props;
                 </div>
             `;
             
-            // Load full image after thumbnail
             const img = slide.querySelector('.lb-slide-img');
-            const skeleton = slide.querySelector('.lb-loading-skeleton');
-            const fullImg = new Image();
-            fullImg.src = item.src;
-            fullImg.onload = () => {
-                if (img) {
-                    img.src = item.src;
-                    img.classList.add('loaded');
-                }
-                if (skeleton) skeleton.style.display = 'none';
-            };
             
             if (index === startIndex && img) {
                 setupZoom(img);
