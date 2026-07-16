@@ -351,14 +351,10 @@ const { lang = 'es' } = Astro.props;
         
         const slides = lbFeed.querySelectorAll('.lb-slide');
         if (slides[index]) {
-            if (smooth) {
-                slides[index].scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            } else {
-                lbFeed.scrollTop = slides[index].offsetTop;
-            }
+            slides[index].scrollIntoView({ 
+                behavior: smooth ? 'smooth' : 'instant', 
+                block: 'start' 
+            });
         }
     }
     
