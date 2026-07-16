@@ -35,10 +35,12 @@
         resize();
 
         window.addEventListener('mousemove', (e) => {
+            const isMobileViewport = window.innerWidth <= 768;
             mouse.x = e.clientX;
             // Since the canvas is fixed and moves 0.05px per 1px scrolled (in Layout.astro)
-            // we have to translate the window.clientY into the canvas's local coordinates.
-            mouse.y = e.clientY - (window.scrollY * 0.05);
+            // on desktop, we translate the window.clientY into the canvas's local coordinates.
+            // On mobile, the canvas is not translated, so no offset is needed.
+            mouse.y = e.clientY - (isMobileViewport ? 0 : window.scrollY * 0.05);
             mouseActive = true;
             clearTimeout(mouseTimer);
             mouseTimer = setTimeout(() => { mouseActive = false; }, 2000);
@@ -46,8 +48,9 @@
 
         window.addEventListener('touchstart', (e) => {
             if (e.touches.length > 0) {
+                const isMobileViewport = window.innerWidth <= 768;
                 mouse.x = e.touches[0].clientX;
-                mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+                mouse.y = e.touches[0].clientY - (isMobileViewport ? 0 : window.scrollY * 0.05);
                 mouseActive = true;
                 clearTimeout(mouseTimer);
             }
@@ -55,8 +58,9 @@
 
         window.addEventListener('touchmove', (e) => {
             if (e.touches.length > 0) {
+                const isMobileViewport = window.innerWidth <= 768;
                 mouse.x = e.touches[0].clientX;
-                mouse.y = e.touches[0].clientY - (window.scrollY * 0.05);
+                mouse.y = e.touches[0].clientY - (isMobileViewport ? 0 : window.scrollY * 0.05);
                 mouseActive = true;
                 clearTimeout(mouseTimer);
             }
