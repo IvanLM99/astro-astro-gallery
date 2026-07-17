@@ -1,8 +1,13 @@
 ---
-const { lang = 'es' } = Astro.props;
+interface Props {
+    lang?: string;
+    initialImageId?: string;
+}
+
+const { lang = 'es', initialImageId = '' } = Astro.props;
 ---
 
-<div id="lightbox">
+<div id="lightbox" data-initial-image-id={initialImageId}>
     <button class="close-lb" id="lb-close" aria-label="Close Lightbox">
         <i class="fas fa-times"></i>
     </button>
@@ -251,6 +256,32 @@ const { lang = 'es' } = Astro.props;
         });
     }
     
+    // Helper to dynamically load full-resolution image for a specific slide
+    function loadFullImageForSlide(idx) {
+        if (idx < 0 || idx >= window.galleryData.length) return;
+        
+        const slides = lbFeed.querySelectorAll('.lb-slide');
+        const slide = slides[idx];
+        if (!slide) return;
+        
+        const img = slide.querySelector('.lb-slide-img');
+        if (!img || img.classList.contains('full-loaded')) return;
+        
+        const fullSrc = img.dataset.full;
+        if (!fullSrc) return;
+        
+        const skeleton = slide.querySelector('.lb-loading-skeleton');
+        
+        const fullImg = new Image();
+        fullImg.src = fullSrc;
+        fullImg.onload = () => {
+            img.src = fullSrc;
+            img.classList.add('loaded');
+            img.classList.add('full-loaded');
+            if (skeleton) skeleton.style.display = 'none';
+        };
+    }
+
     // Build vertical feed
     function buildFeed(startIndex = 0) {
         if (!lbFeed || !window.galleryData) return;
@@ -320,19 +351,9 @@ const { lang = 'es' } = Astro.props;
                 </div>
             `;
             
-            // Load full image after thumbnail
+            // Note: We don't load full-resolution images eagerly for all 112 slides anymore.
+            // Full images will be lazy loaded progressively on index change.
             const img = slide.querySelector('.lb-slide-img');
-            const skeleton = slide.querySelector('.lb-loading-skeleton');
-            const fullImg = new Image();
-            fullImg.src = item.src;
-            fullImg.onload = () => {
-                if (img) {
-                    img.src = item.src;
-                    img.classList.add('loaded');
-                }
-                if (skeleton) skeleton.style.display = 'none';
-            };
-            
             if (index === startIndex && img) {
                 setupZoom(img);
             }
@@ -343,6 +364,10 @@ const { lang = 'es' } = Astro.props;
         // Scroll to start index
         requestAnimationFrame(() => {
             scrollToIndex(startIndex, false);
+            // Progressively load full images around start index
+            loadFullImageForSlide(startIndex);
+            loadFullImageForSlide(startIndex - 1);
+            loadFullImageForSlide(startIndex + 1);
         });
     }
     
@@ -385,19 +410,10 @@ const { lang = 'es' } = Astro.props;
             window.history.replaceState({ imageId: item.id }, '', url);
         }
         
-        // Preload next/prev
-        preloadImage(index - 1);
-        preloadImage(index + 1);
-    }
-    
-    function preloadImage(idx) {
-        if (idx < 0 || idx >= window.galleryData.length) return;
-        const item = window.galleryData[idx];
-        if (item && !item.preloaded) {
-            const img = new Image();
-            img.src = item.src;
-            item.preloaded = true;
-        }
+        // Progressively load full resolution image and its adjacent slides
+        loadFullImageForSlide(index);
+        loadFullImageForSlide(index - 1);
+        loadFullImageForSlide(index + 1);
     }
     
     // Intersection Observer for scroll tracking
@@ -456,8 +472,16 @@ const { lang = 'es' } = Astro.props;
         
         // Clear image param but keep lang and other params
         const url = new URL(window.location.href);
-        url.searchParams.delete('image');
-        window.history.replaceState({}, '', url);
+        if (url.pathname.includes('/image/')) {
+            // Get the prefix before '/image/' (e.g. /astro-gallery/)
+            const prefix = url.pathname.substring(0, url.pathname.indexOf('/image/'));
+            // Redirect to home/gallery preserving language param
+            url.pathname = prefix + '/';
+            window.location.href = url.toString();
+        } else {
+            url.searchParams.delete('image');
+            window.history.replaceState({}, '', url);
+        }
     }
     
     // Navigation buttons
@@ -510,15 +534,19 @@ const { lang = 'es' } = Astro.props;
         }
     });
     
-    // Close on background click
+    // Close on background click (clicking empty black spaces)
     lightbox?.addEventListener('click', (e) => {
-        if (e.target === lightbox) closeLightbox();
+        const target = e.target;
+        if (target === lightbox || target === lbFeed || target.classList.contains('lb-image-section') || target.classList.contains('lb-slide-content') || target.classList.contains('lb-slide')) {
+            closeLightbox();
+        }
     });
     
-    // Check URL on load for direct image access
+    // Check URL or data attributes on load for direct image access
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        const imageId = params.get('image');
+        // Fallback to data attribute if query param is not set (for direct landing on /image/[id] route)
+        const imageId = params.get('image') || lightbox?.dataset.initialImageId;
         if (imageId && window.galleryData) {
             const index = window.galleryData.findIndex(i => i.id === imageId);
             if (index !== -1) {

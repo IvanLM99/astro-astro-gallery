@@ -13,7 +13,7 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
 
 <nav id="navbar">
     <div class="nav-left">
-        <a href={homeUrl} class="site-title">I. LOPEZ</a>
+        <a href={homeUrl} class="site-title" id="logo-link">I. LOPEZ</a>
     </div>
 
     <div class="nav-center">
@@ -102,6 +102,23 @@ const universeUrl = getRelativeLocaleUrl(lang, 'universe');
             url.searchParams.delete('lang');
         }
         window.history.replaceState({}, '', url);
+
+        // Dynamically update Navbar links hrefs to preserve the chosen language query param
+        const btnGallery = document.getElementById('btn-gallery');
+        const btnUniverse = document.getElementById('btn-universe');
+        const logoLink = document.getElementById('logo-link');
+        
+        [btnGallery, btnUniverse, logoLink].forEach(link => {
+            if (link && link instanceof HTMLAnchorElement) {
+                const linkUrl = new URL(link.href, window.location.origin);
+                if (targetLang === 'en') {
+                    linkUrl.searchParams.set('lang', 'en');
+                } else {
+                    linkUrl.searchParams.delete('lang');
+                }
+                link.href = linkUrl.pathname + linkUrl.search;
+            }
+        });
         
         // Dispatch event for other components
         window.dispatchEvent(new CustomEvent('langChange', { detail: { lang: targetLang } }));

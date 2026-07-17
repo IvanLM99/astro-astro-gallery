@@ -1,3 +1,7 @@
+html {
+    scrollbar-gutter: stable;
+}
+
 :root {
     --bg-color: #03050a; 
     --text-main: #e2e8f0;
@@ -627,6 +631,7 @@ body.no-scroll {
 
 .lb-feed {
     height: 100vh;
+    height: 100dvh;
     overflow-y: scroll;
     overflow-x: hidden;
     scroll-snap-type: y mandatory;
@@ -635,6 +640,7 @@ body.no-scroll {
 
 .lb-slide {
     min-height: 100vh;
+    min-height: 100dvh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
     display: flex;
@@ -647,6 +653,7 @@ body.no-scroll {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .lb-image-section {
