@@ -59,9 +59,9 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
     try {
         const thumb = await getImage({
             src: item.imageMetadata,
-            width: 30,        // INCREASED from 15
+            width: 400,        // INCREASED for high quality blur-up
             format: 'webp',
-            quality: 50        // INCREASED from 15
+            quality: 70        // INCREASED for high quality blur-up
         });
         thumbnailSrc = thumb.src;
     } catch (e) {
@@ -79,7 +79,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 
 <header class="gallery-header">
     <div class="quote-container">
-        <h1 id="quote-text" class="philosophical-quote"></h1>
+        <div id="quote-text" class="philosophical-quote" role="heading" aria-level="2"></div>
         <p id="quote-author" class="quote-author"></p>
     </div>
 
@@ -96,7 +96,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
 </header>
 
 <div id="gallery-root">
-    {years.map(year => (
+    {years.map((year, yearIndex) => (
         <div class="year-section" id={`year-${year}`}>
             <h2 class="year-title collapsible reveal" data-year={year}>{year} <span class="toggle-icon">−</span></h2>
             <div class="year-content" data-year-content={year}>
@@ -109,7 +109,7 @@ const lightboxMap = await Promise.all(validItems.map(async (item) => {
                                 width={400}
                                 quality={75}
                                 format="webp"
-                                loading={index < 4 ? "eager" : "lazy"}
+                                loading={yearIndex === 0 && index < 4 ? "eager" : "lazy"}
                                 decoding="async"
                             />
                             <div class="overlay">

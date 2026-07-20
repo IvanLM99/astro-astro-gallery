@@ -31,6 +31,18 @@ body.no-scroll { overflow: hidden; }
     z-index: 0; pointer-events: none;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* Loader */
 #loader-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
@@ -939,8 +951,8 @@ body.no-scroll {
     }
     
     .close-lb {
-        top: 10px;
-        right: 10px;
+        top: max(10px, env(safe-area-inset-top));
+        right: max(10px, env(safe-area-inset-right));
         width: 40px;
         height: 40px;
         font-size: 1.2rem;
