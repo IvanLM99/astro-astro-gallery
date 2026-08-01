@@ -1,13 +1,17 @@
 import { defineConfig } from 'astro/config';
 
+// Fallback to root '/' if process.env.BASE_PATH isn't set
+const BASE_PATH = process.env.BASE_PATH || '/';
+const SITE_URL = process.env.SITE_URL || 'https://ilm-astro-gallery.pages.dev';
+
 export default defineConfig({
-  site: 'https://ivanlm99.github.io',
-  base: '/astro-gallery', // Change if your repo is named differently
+  site: SITE_URL,
+  base: BASE_PATH,
   i18n: {
     defaultLocale: 'es',
     locales: ['es', 'en'],
     routing: {
-      prefixDefaultLocale: false // Makes /gallery default to Spanish, /en/gallery for English
+      prefixDefaultLocale: false 
     }
   },
   build: {
@@ -15,8 +19,8 @@ export default defineConfig({
   },
   vite: {
     build: {
-      cssCodeSplit: true, // Better performance
-      assetsInlineLimit: 4096 // Inline small assets
+      cssCodeSplit: true,
+      assetsInlineLimit: 4096
     }
   }
 });
