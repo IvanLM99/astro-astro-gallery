@@ -16,8 +16,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Install, build, and upload
         uses: withastro/action@v2
+        env:
+          SITE_URL: 'https://ivanlm99.github.io'
+          BASE_PATH: '/astro-gallery'
 
   deploy:
     needs: build
