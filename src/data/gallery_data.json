@@ -1,22 +1,5 @@
 [
     {
-        "id": "2448c3fed8b647ff9051f4969557e711",
-        "year": "2026",
-        "month": "08",
-        "day": "12",
-        "category": "solar",
-        "src": "assets/2026/Eclipse 3.jpg",
-        "title_en": "Diamond Ring",
-        "title_es": "Anillo de diamantes",
-        "story_en": "",
-        "story_es": "",
-        "date": "12-08-2026",
-        "object_es": "Eclipse Total Solar",
-        "object_en": "Total Solar Eclipse",
-        "exposure": "",
-        "equipment": "Seestar S30 Pro"
-    },
-    {
         "id": "e8b835dd29f74b178ca1fd60babd7219",
         "year": "2026",
         "month": "08",
